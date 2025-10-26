@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Services — Freelance, Dépannage, Design</title>
+    <meta name="description" content="Prestations : développement web freelance, dépannage & maintenance, design UI/UX. Demandez un devis rapide." />
+    <style>
+        :root{
+            --bg:#f7f9fc;
+            --card:#ffffff;
+            --accent:#0b74de;
+            --muted:#6b7280;
+            --radius:12px;
+            --gap:18px;
+            font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            color:#102a43;
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+            margin:0;
+            background:linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+            line-height:1.45;
+            padding:28px;
+        }
+        header{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+            margin-bottom:22px;
+        }
+        .brand{display:flex;align-items:center;gap:12px}
+        .logo{
+            width:44px;height:44px;border-radius:10px;
+            background:linear-gradient(135deg,var(--accent),#3bb3ff);
+            display:flex;align-items:center;justify-content:center;color:white;font-weight:700;
+            box-shadow:0 6px 18px rgba(11,116,222,0.14);
+        }
+        nav a{margin-left:16px;color:var(--muted);text-decoration:none;font-weight:600}
+        .hero{
+            display:flex;
+            flex-wrap:wrap;
+            gap:20px;
+            align-items:center;
+            justify-content:space-between;
+            padding:22px;
+            background:var(--card);
+            border-radius:var(--radius);
+            box-shadow:0 6px 24px rgba(16,42,67,0.06);
+        }
+        .hero-left{max-width:720px}
+        h1{margin:0 0 8px 0;font-size:1.6rem}
+        p.lead{margin:0;color:var(--muted)}
+        .cta-row{margin-top:14px;display:flex;gap:12px;flex-wrap:wrap}
+        .btn{
+            display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;
+            text-decoration:none;border:0;cursor:pointer;font-weight:600;
+        }
+        .btn-primary{background:var(--accent);color:white;box-shadow:0 8px 26px rgba(11,116,222,0.12)}
+        .btn-ghost{background:transparent;color:var(--muted);border:1px solid rgba(16,42,67,0.06)}
+        .grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+            gap:var(--gap);
+            margin-top:20px;
+        }
+        .card{
+            background:var(--card);
+            padding:18px;border-radius:12px;
+            box-shadow:0 8px 20px rgba(18,38,63,0.04);
+            min-height:160px;
+            display:flex;flex-direction:column;gap:10px;
+        }
+        .card h3{margin:0;font-size:1.05rem}
+        .muted{color:var(--muted);font-size:0.93rem}
+        ul.features{margin:8px 0 0 18px;padding:0;color:var(--muted)}
+        .price{
+            margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:12px;
+        }
+        .price .from{color:var(--muted);font-size:0.9rem}
+        .price .cost{font-weight:700;color:var(--accent)}
+        footer{
+            margin-top:26px;padding:18px;border-radius:12px;background:linear-gradient(180deg,#ffffff,#fbfdff);
+            display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:0.95rem;color:var(--muted)
+        }
+        form.contact{
+            display:grid;gap:8px;
+            grid-template-columns:1fr 200px;
+            align-items:center;
+        }
+        form.contact input, form.contact textarea{
+            padding:10px;border-radius:8px;border:1px solid rgba(16,42,67,0.06);font-size:0.95rem;width:100%;
+        }
+        @media (max-width:720px){
+            header{flex-direction:column;align-items:flex-start}
+            .hero{flex-direction:column}
+            form.contact{grid-template-columns:1fr}
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <div class="logo">P</div>
+            <div>
+                <strong>Portfolio</strong><div class="muted" style="font-size:0.85rem">Services freelance & dépannage</div>
+            </div>
+        </div>
+        <nav aria-label="Navigation principale">
+            <a href="index.html">Accueil</a>
+            <a href="projects.html">Projets</a>
+            <a href="services.html" aria-current="page">Services</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero" aria-labelledby="services-title">
+            <div class="hero-left">
+                <h1 id="services-title">Je propose des services pour votre projet</h1>
+                <p class="lead">Développement web freelance, dépannage & maintenance, design UI/UX et conseils techniques. Solutions rapides, communication claire et tarifs transparents.</p>
+                <div class="cta-row">
+                    <a class="btn btn-primary" href="#contact">Demander un devis</a>
+                    <a class="btn btn-ghost" href="portfolio.html">Voir mes réalisations</a>
+                </div>
+            </div>
+            <div style="min-width:220px;display:flex;flex-direction:column;gap:10px;">
+                <div style="background:#eef7ff;padding:14px;border-radius:10px;color:#184e8f">
+                    <strong>Réponse sous 24h</strong>
+                    <div class="muted" style="margin-top:6px;font-size:0.9rem">Pour les demandes classiques de maintenance et devis.</div>
+                </div>
+                <div style="background:#fff7ec;padding:14px;border-radius:10px;color:#8a4b00">
+                    <strong>Forfait ou au taux horaire</strong>
+                    <div class="muted" style="margin-top:6px;font-size:0.9rem">Options adaptées au type de projet.</div>
+                </div>
+            </div>
+        </section>
+
+        <section style="margin-top:20px">
+            <h2 style="margin:0 0 10px 0">Prestations</h2>
+            <div class="grid" role="list">
+                <article class="card" role="listitem" aria-labelledby="svc-dev">
+                    <h3 id="svc-dev">Développement web (freelance)</h3>
+                    <p class="muted">Sites vitrines, landing pages, applications web, intégration responsive et optimisation performance.</p>
+                    <ul class="features">
+                        <li>HTML5, CSS3, JavaScript, frameworks modernes</li>
+                        <li>Responsive & SEO de base</li>
+                        <li>Intégration CMS (WordPress, headless) sur demande</li>
+                    </ul>
+                    <div class="price">
+                        <div class="from">À partir de</div>
+                        <div class="cost">300€ — projet simple</div>
+                    </div>
+                </article>
+
+                <article class="card" role="listitem" aria-labelledby="svc-fix">
+                    <h3 id="svc-fix">Dépannage & maintenance</h3>
+                    <p class="muted">Corrections urgentes, mises à jour, sauvegardes, sécurisation et restauration après incident.</p>
+                    <ul class="features">
+                        <li>Intervention rapide</li>
+                        <li>Audit de sécurité</li>
+                        <li>Forfaits mensuels disponibles</li>
+                    </ul>
+                    <div class="price">
+                        <div class="from">Taux horaire</div>
+                        <div class="cost">45€ / heure</div>
+                    </div>
+                </article>
+
+                <article class="card" role="listitem" aria-labelledby="svc-design">
+                    <h3 id="svc-design">Design UI / UX</h3>
+                    <p class="muted">Maquettes, prototypes interactifs, optimisation des parcours utilisateurs et recommandations d'accessibilité.</p>
+                    <ul class="features">
+                        <li>Figma / Sketch / Adobe XD</li>
+                        <li>Prototypes cliquables</li>
+                        <li>Design system léger</li>
+                    </ul>
+                    <div class="price">
+                        <div class="from">Pack</div>
+                        <div class="cost">450€ — page complète</div>
+                    </div>
+                </article>
+
+                <article class="card" role="listitem" aria-labelledby="svc-conseil">
+                    <h3 id="svc-conseil">Conseil & formation</h3>
+                    <p class="muted">Accompagnement technique, audits de code, formation d'équipes sur bonnes pratiques et outils.</p>
+                    <ul class="features">
+                        <li>Sessions en ligne ou sur site</li>
+                        <li>Supports fournis</li>
+                        <li>Personnalisable selon besoin</li>
+                    </ul>
+                    <div class="price">
+                        <div class="from">Consultation</div>
+                        <div class="cost">80€ / heure</div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section id="contact" style="margin-top:22px;">
+            <h2 style="margin-bottom:8px">Contact & demande de devis</h2>
+            <p class="muted" style="margin-top:0">Remplissez le formulaire ci-dessous ou envoyez un email pour une réponse sous 24h.</p>
+
+            <form class="contact" action="mailto:monemail@example.com" method="post" enctype="text/plain" aria-label="Formulaire de contact">
+                <div>
+                    <input type="text" name="nom" placeholder="Votre nom" required />
+                </div>
+                <div>
+                    <input type="email" name="email" placeholder="Votre email" required />
+                </div>
+                <div style="grid-column:1/-1">
+                    <input type="text" name="objet" placeholder="Objet (ex: devis, dépannage)" />
+                </div>
+                <div style="grid-column:1/-1">
+                    <textarea name="message" rows="5" placeholder="Décrivez votre besoin..." required></textarea>
+                </div>
+                <div style="grid-column:1/-1;display:flex;justify-content:flex-end">
+                    <button class="btn btn-primary" type="submit">Envoyer la demande</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <div>© <strong>Portfolio</strong> — Freelance web & design</div>
+        <div style="display:flex;gap:12px;align-items:center">
+            <div class="muted">Email: <a href="mailto:monemail@example.com">monemail@example.com</a></div>
+            <div class="muted">Tel: <a href="tel:+33123456789">+33 1 23 45 67 89</a></div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(a=>{
+            a.addEventListener('click', e=>{
+                const id = a.getAttribute('href');
+                if(id.length>1){
+                    e.preventDefault();
+                    document.querySelector(id)?.scrollIntoView({behavior:'smooth',block:'start'});
+                }
+            });
+        });
+    </script>
+</body>
+</html></article></ul></article></div></ul></article></div></section></div>
