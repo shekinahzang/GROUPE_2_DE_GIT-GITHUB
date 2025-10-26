@@ -72,12 +72,95 @@
         /* Nouveau bloc "À la une" */
         .highlight{display:flex;gap:12px;align-items:center;padding:12px;border-radius:12px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
         .highlight .meta{color:var(--muted);font-size:0.9rem}
+        /* Images: placeholder + transition pour chargement progressif */
+        .img-placeholder{display:block;width:100%;height:auto;background-color:rgba(255,255,255,0.02);border-radius:10px;overflow:hidden}
+        img{max-width:100%;height:auto;display:block;opacity:0;transition:opacity .28s ease,transform .28s ease}
+        img.loaded{opacity:1;transform:none}
         @media (max-width:880px){
             .hero{grid-template-columns:1fr}
             nav{display:none}
             .tabs{flex-wrap:wrap}
         }
     </style>
+    <link rel="preload" as="image" href="images/photo.jpg">
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var img = document.querySelector('.profile-card img');
+        if (!img) return;
+        // remplacer le placeholder par votre photo (placez le fichier dans /images/photo.jpg ou adaptez le chemin)
+        img.setAttribute('data-src', 'images/photo.jpg');
+        img.setAttribute('data-priority', '1');
+        // si vous préférez charger immédiatement sans lazy, décommentez les lignes ci-dessous :
+        // img.src = 'images/photo.jpg';
+        // img.classList.add('loaded');
+    });
+    </script>
+    <script>
+    // Chargement d'images optimisé : preload pour éléments critiques, lazy + intersection observer pour le reste.
+    (function(){
+        // précharge les images marquées priority via data-priority="1" ou le logo SVG de la page
+        function preloadImage(url){
+            if(!url || url.startsWith('data:')) return;
+            var l = document.createElement('link');
+            l.rel = 'preload'; l.as = 'image'; l.href = url;
+            document.head.appendChild(l);
+        }
+        document.addEventListener('DOMContentLoaded', function(){
+            // précharger logo si img présent dans .logo
+            var logoImg = document.querySelector('.logo img, .brand img');
+            if(logoImg) preloadImage(logoImg.getAttribute('src'));
+
+            // Précharger les images marquées data-priority="1"
+            document.querySelectorAll('img[data-priority="1"]').forEach(function(i){
+                preloadImage(i.getAttribute('data-src') || i.getAttribute('src'));
+            });
+
+            // IntersectionObserver pour lazy-loading progressif
+            if('IntersectionObserver' in window){
+                var io = new IntersectionObserver(function(entries, obs){
+                    entries.forEach(function(entry){
+                        if(entry.isIntersecting){
+                            var img = entry.target;
+                            if(img.dataset.src){ img.src = img.dataset.src; }
+                            if(img.dataset.srcset){ img.srcset = img.dataset.srcset; }
+                            img.loading = img.loading || 'lazy';
+                            // quand l'image se charge, ajouter la classe .loaded pour transition
+                            img.addEventListener('load', function(){ img.classList.add('loaded'); });
+                            obs.unobserve(img);
+                        }
+                    });
+                }, {rootMargin: '200px 0px'});
+
+                document.querySelectorAll('img').forEach(function(img){
+                    // laisser eager pour les images explicitement prioritaires (logo ou data-priority)
+                    if(img.closest('header') || img.classList.contains('logo') || img.dataset.priority === '1' || img.getAttribute('loading') === 'eager'){
+                        img.loading = 'eager';
+                        // si déjà chargée, marquer loaded
+                        if(img.complete) img.classList.add('loaded');
+                        return;
+                    }
+                    // si l'auteur a fourni data-src / data-srcset, on observe ; sinon on active lazy attribute
+                    if(img.dataset.src || img.dataset.srcset){
+                        // garder un placeholder (peut être inline SVG ou petite image de basse qualité)
+                        io.observe(img);
+                    } else {
+                        img.loading = img.loading || 'lazy';
+                        if(img.complete) img.classList.add('loaded');
+                    }
+                });
+            } else {
+                // fallback simple : swap data-src immédiatement
+                document.querySelectorAll('img[data-src]').forEach(function(img){
+                    img.src = img.dataset.src;
+                    if(img.dataset.srcset) img.srcset = img.dataset.srcset;
+                    img.loading = img.loading || 'lazy';
+                    img.addEventListener('load', function(){ img.classList.add('loaded'); });
+                });
+            }
+        });
+    })();
+    </script>
 </head>
 <body>
     <a class="skip-link" href="#main">Aller au contenu</a>
