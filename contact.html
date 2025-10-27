@@ -2,15 +2,17 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8" />
+    <meta name="author" content="Ngono" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Contact — Ngono Portfolio</title>
     <meta name="description" content="Page de contact du portfolio" />
     <style>
         /* -- C1: Standardisation des titres Ngono Portfolio -- */ 
-    :root{--bg:#f7f8fb;--card:#fff;--accent:#0066cc;--muted:#6b7280}
-    /* ... le reste du CSS ... */
+        :root{--bg:#f7f8fb;--card:#fff;--accent:#0066cc;--muted:#6b7280}
+        
+        /* -- C2: Amélioration accessibilité et fond par Ngono -- */ 
         :root{
-            --bg:#0f1724;
+            --bg:#111927; /* MODIFIÉ de #0f1724 */
             --card:#0b1220;
             --accent:#06b6d4;
             --muted:#98a0b3;
@@ -110,7 +112,7 @@
         .icon{
             width:40px;height:40px;border-radius:8px;
             display:flex;align-items:center;justify-content:center;
-            background:rgba(255,255,255,0.03);
+            background:rgba(255, 119, 119, 0.03);
             flex-shrink:0;
         }
         .muted{color:var(--muted);font-size:0.95rem}
