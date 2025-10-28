@@ -4,59 +4,48 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>À propos — Portfolio</title>
-   <style>
-    :root{
-        --bg:#e0f7ff;       /* Fond bleu ciel clair */
-        --card:#ffffff;      /* Cartes blanches */
-        --accent:#0e4a69;    /* Accent bleu ciel pour boutons, logo et barres */
-        --muted:#475569;     /* Texte secondaire */
-    }
-    *{box-sizing:border-box}
-    body{
-        font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;
-        margin:0;
-        background:var(--bg);
-        color:#1e293b;
-        line-height:1.5;
-    }
-    .container{max-width:960px;margin:36px auto;padding:24px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
-    a.logo{font-weight:700;color:var(--accent);text-decoration:none}
-    nav a{color:var(--muted);text-decoration:none;margin-left:12px}
-    .card{
-        background:var(--card);
-        padding:20px;
-        border-radius:12px;
-        box-shadow:0 4px 18px rgba(2,38,63,0.06);
-    }
-    .profile{display:flex;gap:20px;align-items:center}
-    .avatar{
-        width:120px;height:120px;border-radius:12px;object-fit:cover;
-        background:#bae6fd;
-        flex:0 0 120px;
-    }
-    h1{margin:0 0 6px 0;font-size:1.6rem}
-    p.lead{margin:0;color:var(--muted)}
-    .meta{margin-top:14px;color:var(--muted);font-size:0.95rem}
-    .grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
-    @media(min-width:720px){.grid{grid-template-columns:1fr 320px}}
-    .skills li{list-style:none;margin-bottom:12px}
-    .bar{background:#d0f0ff;border-radius:999px;height:10px;overflow:hidden}
-    .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#7dd3fc);border-radius:999px}
-    .section-title{font-weight:600;margin-bottom:8px}
-    footer{margin-top:22px;text-align:center;color:var(--muted);font-size:0.9rem}
-    .cta{
-        display:inline-block;
-        margin-top:12px;
-        padding:8px 14px;
-        border-radius:8px;
-        background:var(--accent);
-        color:#fff;
-        text-decoration:none;
-    }
-    .small{font-size:0.95rem;color:var(--muted)}
-</style>
-
+    <style>
+        :root{
+            --bg:#081224;     /* fond sombre */
+            --card:#0b1a2a;   /* carte sombre */
+            --accent:#4fb3ff; /* accent lumineux */
+            --muted:#98a8b9;  /* texte secondaire */
+            --text:#e6f0fb;   /* texte principal */
+        }
+        *{box-sizing:border-box}
+        body{font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;margin:0;background:var(--bg);color:var(--text);line-height:1.5}
+        .container{max-width:960px;margin:36px auto;padding:24px}
+        header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+        a.logo{font-weight:700;color:var(--accent);text-decoration:none}
+        nav a{color:var(--muted);text-decoration:none;margin-left:12px}
+        .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:20px;border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,0.7);border:1px solid rgba(255,255,255,0.03)}
+        .profile{display:flex;gap:20px;align-items:center}
+        .avatar{width:120px;height:120px;border-radius:12px;object-fit:cover;background:#071428;flex:0 0 120px;border:1px solid rgba(255,255,255,0.04)}
+        h1{margin:0 0 6px 0;font-size:1.6rem;color:var(--text)}
+        p.lead{margin:0;color:var(--muted)}
+        .meta{margin-top:14px;color:var(--muted);font-size:0.95rem}
+        .grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
+        @media(min-width:720px){.grid{grid-template-columns:1fr 320px}}
+        .skills li{list-style:none;margin-bottom:12px}
+        .bar{background:rgba(79,179,255,0.08);border-radius:999px;height:10px;overflow:hidden}
+        .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#2b82ff);border-radius:999px}
+        .section-title{font-weight:600;margin-bottom:8px;color:var(--text)}
+        footer{margin-top:22px;text-align:center;color:var(--muted);font-size:0.9rem}
+        .cta{display:inline-block;margin-top:12px;padding:8px 14px;border-radius:8px;background:var(--accent);color:#071428;text-decoration:none;font-weight:600}
+        .small{font-size:0.95rem;color:var(--muted)}
+        a {color:var(--accent)}
+    </style>
+    <script>
+        // Remplace la photo de profil par une image en ligne (taille 400x400).
+        // Vous pouvez remplacer l'URL ci-dessous par une autre si souhaité.
+        document.addEventListener('DOMContentLoaded', function () {
+            var img = document.querySelector('.avatar');
+            if (img) {
+                img.src = 'https://picsum.photos/seed/angelique/400';
+                img.alt = 'Photo de profil';
+            }
+        });
+    </script>
 </head>
 <body>
     <div class="container">

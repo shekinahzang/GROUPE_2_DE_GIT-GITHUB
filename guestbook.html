@@ -5,40 +5,129 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Livre d'or — Laissez un avis</title>
     <style>
-        :root{--bg:#f6f8fa;--card:#fff;--muted:#6b7280;--accent:#0ea5a4;--danger:#ef4444}
+        :root{
+            --bg-1:#0b1220; --bg-2:#071020;
+            --card:#0f1724; --muted:#9aa6b2;
+            --accent:#d4a617; /* gold accent */
+            --danger:#ef4444;
+            --input:#0b1520; --border:#16202a;
+            --text:#e6eef6;
+        }
         *{box-sizing:border-box}
-        body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;line-height:1.4;margin:0;background:linear-gradient(180deg,#eef2f7 0,#f8fafc 100%);padding:32px;color:#0f172a}
+        body{
+            font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+            line-height:1.4;margin:0;
+            background:linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%);
+            padding:32px;color:var(--text);
+        }
         .container{max-width:900px;margin:0 auto}
-        header{display:flex;align-items:center;gap:16px;margin-bottom:20px}
-        header h1{font-size:20px;margin:0}
-        .card{background:var(--card);padding:20px;border-radius:10px;box-shadow:0 6px 18px rgba(14,22,33,0.06);margin-bottom:16px}
+        /* navigation tabs (injected by script) */
+        .tabs{display:flex;gap:8px;margin-bottom:16px;align-items:center}
+        .tabs .tab{
+            background:transparent;color:var(--muted);border:1px solid transparent;padding:8px 12px;border-radius:8px;
+            cursor:pointer;font-weight:600;font-size:14px;
+        }
+        .tabs .tab:hover{background:rgba(255,255,255,0.03)}
+        .tabs .tab.active{background:linear-gradient(90deg, rgba(212,166,23,0.12), rgba(212,166,23,0.06));border-color:rgba(212,166,23,0.18);color:var(--accent)}
+        header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+        /* gold-book image next to title */
+        .gold-book{width:44px;height:44px;flex:0 0 44px;border-radius:8px;object-fit:contain;box-shadow:0 4px 14px rgba(0,0,0,0.6)}
+        header h1{font-size:20px;margin:0;color:var(--text);display:flex;align-items:center;gap:8px}
+        .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:20px;border-radius:10px;box-shadow:0 6px 18px rgba(2,6,23,0.6);margin-bottom:16px;border:1px solid rgba(255,255,255,0.02)}
         form .row{display:flex;gap:12px;flex-wrap:wrap}
         label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
         input[type="text"],input[type="email"],textarea,select{
-            width:100%;padding:10px;border:1px solid #e6e9ef;border-radius:8px;font-size:15px;background:#fff
+            width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:15px;background:var(--input);color:var(--text)
         }
         textarea{min-height:110px;resize:vertical}
         .grid-2{display:grid;grid-template-columns:1fr 120px;gap:12px}
         .actions{display:flex;gap:8px;align-items:center;margin-top:12px}
-        button{background:var(--accent);color:white;border:0;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:600}
-        button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(14,165,164,0.12)}
+        button{background:var(--accent);color:#071018;border:0;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:700}
+        button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(212,166,23,0.12)}
         button.danger{background:var(--danger)}
         .muted{color:var(--muted);font-size:13px}
         .entries{display:flex;flex-direction:column;gap:12px}
-        .entry{padding:12px;border-radius:8px;background:linear-gradient(180deg,rgba(2,6,23,0.02),transparent);display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+        .entry{padding:12px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border:1px solid rgba(255,255,255,0.02)}
         .entry-left{flex:1}
         .meta{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-        .name{font-weight:700}
+        .name{font-weight:700;color:var(--text)}
         .time{color:var(--muted);font-size:13px}
         .rating{color:#f59e0b}
-        .comment{white-space:pre-wrap}
+        .comment{white-space:pre-wrap;color:var(--text)}
         .no-entries{color:var(--muted);text-align:center;padding:20px}
         .controls{display:flex;gap:8px;align-items:center}
         .trash{background:transparent;border:0;color:#9ca3af;cursor:pointer;padding:6px;border-radius:6px}
         .small{font-size:13px}
         .charcount{color:var(--muted);font-size:13px;margin-left:auto}
+        /* responsive */
         @media (max-width:600px){.grid-2{grid-template-columns:1fr}}
     </style>
+
+    <script>
+        // Inject a simple tab navigation and a gold-book image next to title.
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.querySelector('.container');
+            if (container) {
+                const nav = document.createElement('nav');
+                nav.className = 'tabs';
+                const tabs = [
+                    {id:'home', label:'Accueil', href:'index.html'},
+                    {id:'guestbook', label:"Livre d'or", active:true},
+                ];
+
+                // If a tab has an href, navigate when it's clicked (capture phase so it runs before per-tab handlers)
+                nav.addEventListener('click', (ev) => {
+                    const btn = ev.target.closest('.tab');
+                    if (!btn) return;
+                    const t = tabs.find(x => x.id === btn.dataset.tab);
+                    if (t && t.href) {
+                        if (ev.metaKey || ev.ctrlKey) {
+                            window.open(t.href, '_blank');
+                        } else {
+                            window.location.href = t.href;
+                        }
+                        ev.preventDefault();
+                    }
+                }, true);
+                for (const t of tabs) {
+                    const btn = document.createElement('button');
+                    btn.className = 'tab' + (t.active ? ' active' : '');
+                    btn.type = 'button';
+                    btn.textContent = t.label;
+                    btn.dataset.tab = t.id;
+                    btn.addEventListener('click', () => {
+                        nav.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+                        btn.classList.add('active');
+                        // simple behavior: focus guestbook when clicked
+                        if (t.id === 'guestbook') {
+                            const name = document.getElementById('name');
+                            if (name) name.focus();
+                        }
+                    });
+                    nav.appendChild(btn);
+                }
+                container.insertBefore(nav, container.firstChild);
+            }
+
+            const header = document.querySelector('header');
+            if (header) {
+                // SVG of a gold book as data URI
+                const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'>
+                    <defs><linearGradient id='g' x1='0' x2='1'><stop offset='0' stop-color='#ffdf7a'/><stop offset='1' stop-color='#d4a617'/></linearGradient></defs>
+                    <rect x='6' y='12' width='44' height='36' rx='4' fill='url(#g)' stroke='#b8860b' stroke-width='2'/>
+                    <path d='M50 14c4 0 6 2 6 6v24' stroke='#b8860b' stroke-width='2' fill='none'/>
+                    <path d='M12 22h34' stroke='#b8860b' stroke-width='1' opacity='0.35'/>
+                  </svg>`;
+                const img = document.createElement('img');
+                img.className = 'gold-book';
+                img.alt = "Livre en or";
+                img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+                // Insert before the h1 so it appears beside the title
+                const h1 = header.querySelector('h1');
+                if (h1) header.insertBefore(img, h1);
+            }
+        });
+    </script>
 </head>
 <body>
     <div class="container">
