@@ -39,9 +39,38 @@
         .small{font-size:13px}
         .charcount{color:var(--muted);font-size:13px;margin-left:auto}
         @media (max-width:600px){.grid-2{grid-template-columns:1fr}}
+
+        nav.topnav{
+            display:flex;
+            gap:10px;
+            align-items:center;
+            margin-bottom:18px;
+        }
+        nav.topnav a{
+            color:var(--white);
+            text-decoration:none;
+            background:rgba(255,255,255,0.02);
+            padding:8px 12px;
+            border-radius:8px;
+            font-size:0.95rem;
+        }
+        nav.topnav a.current{
+            background:linear-gradient(90deg,var(--accent),#7c3aed);
+            color:#021021;
+            font-weight:600;
+        }
     </style>
 </head>
 <body>
+    <nav class="topnav" aria-label="Navigation principale">
+        <a href="index.html" title="Accueil">Accueil</a>
+        <a href="guestbook.html" class="current" title="Guestbook">Guestbook</a>
+        <a href="hobbies.html" title="Hobbies">Hobbies</a>
+        <a href="services.html" title="Services">Services</a>
+        <a href="contact.html" class="contact" title="Contact">Contact</a>
+        <a href="projects.html" title="Projets">Projets</a>
+        <a href="about.html" title="A propos">A propos</a>
+    </nav>
     <div class="container">
       <header>
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden>
