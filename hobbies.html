@@ -2,12 +2,18 @@
     <div style="display:flex;align-items:center;gap:12px"></div>
 <head>
     <meta charset="utf-8" />
+    <meta name="author" content="Ngono" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Hobbies — En dehors du travail - Autres activités</title>
+    <title>Hobbies — En dehors du travail Ngono Portfolio</title>
     <meta name="description" content="Page présentant mes hobbies en dehors du travail : photographie, randonnée, lecture, cuisine, musique, programmation." />
     <style>
+        /* -- C1: Standardisation des titres Ngono Portfolio -- */ 
+        :root{--bg:#f7f8fb;--card:#fff;--accent:#0066cc;--muted:#6b7280}
+        
+        /* -- C2: Amélioration accessibilité et fond par Ngono -- */ 
         :root{
-            --bg:#0f1724; --card:#0b1622; --muted:#9aa4b2; --accent:#38bdf8; --glass: rgba(255,255,255,0.03);
+            --bg:#111927; /* MODIFIÉ de #0f1724 */
+            --card:#0b1622; --muted:#9aa4b2; --accent:#38bdf8; --glass: rgba(255,255,255,0.03);
             --radius:12px; font-family: Inter, Roboto, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial;
         }
         *{box-sizing:border-box}
@@ -45,6 +51,9 @@
         footer{margin-top:28px;color:var(--muted);font-size:0.9rem;text-align:center}
         a.more{color:var(--accent);text-decoration:none;font-weight:600}
         /* responsive */
+        /* -- C3: Ajustement du margin-top du footer -- */
+footer{
+    margin-top:35px;border-top:1px dashed rgba(255,255,255,0.03);padding:22px 0;text-align:center;color:var(--muted);font-size:0.9rem}
         @media (max-width:480px){
             header{flex-direction:column;align-items:flex-start}
             .icon{width:48px;height:48px;flex:0 0 48px}

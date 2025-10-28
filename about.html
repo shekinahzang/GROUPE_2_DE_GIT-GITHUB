@@ -1,138 +1,164 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
-<head>
+  <head>
     <meta charset="utf-8" />
+    <meta name="author" content="Ngono" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>À propos — Portfolio</title>
     <style>
-        :root{
-            --bg:#081224;     /* fond sombre */
-            --card:#0b1a2a;   /* carte sombre */
-            --accent:#4fb3ff; /* accent lumineux */
-            --muted:#98a8b9;  /* texte secondaire */
-            --text:#e6f0fb;   /* texte principal */
-        }
+        :root{--bg:#f7f8fb;--card:#fff;--accent:#0066cc;--muted:#6b7280}
         *{box-sizing:border-box}
-        body{font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;margin:0;background:var(--bg);color:var(--text);line-height:1.5}
+        body{font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;margin:0;background:var(--bg);color:#111;line-height:1.5}
         .container{max-width:960px;margin:36px auto;padding:24px}
         header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
         a.logo{font-weight:700;color:var(--accent);text-decoration:none}
         nav a{color:var(--muted);text-decoration:none;margin-left:12px}
-        .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:20px;border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,0.7);border:1px solid rgba(255,255,255,0.03)}
+        .card{background:var(--card);padding:20px;border-radius:12px;box-shadow:0 4px 18px rgba(15,23,42,0.06)}
         .profile{display:flex;gap:20px;align-items:center}
-        .avatar{width:120px;height:120px;border-radius:12px;object-fit:cover;background:#071428;flex:0 0 120px;border:1px solid rgba(255,255,255,0.04)}
-        h1{margin:0 0 6px 0;font-size:1.6rem;color:var(--text)}
+        .avatar{width:120px;height:120px;border-radius:12px;object-fit:cover;background:#e6eefc;flex:0 0 120px}
+        h1{margin:0 0 6px 0;font-size:1.6rem}
         p.lead{margin:0;color:var(--muted)}
         .meta{margin-top:14px;color:var(--muted);font-size:0.95rem}
         .grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
         @media(min-width:720px){.grid{grid-template-columns:1fr 320px}}
         .skills li{list-style:none;margin-bottom:12px}
-        .bar{background:rgba(79,179,255,0.08);border-radius:999px;height:10px;overflow:hidden}
+        .bar{background:#eef2ff;border-radius:999px;height:10px;overflow:hidden}
         .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#2b82ff);border-radius:999px}
-        .section-title{font-weight:600;margin-bottom:8px;color:var(--text)}
+        .section-title{font-weight:600;margin-bottom:8px}
         footer{margin-top:22px;text-align:center;color:var(--muted);font-size:0.9rem}
-        .cta{display:inline-block;margin-top:12px;padding:8px 14px;border-radius:8px;background:var(--accent);color:#071428;text-decoration:none;font-weight:600}
+        .cta{display:inline-block;margin-top:12px;padding:8px 14px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none}
         .small{font-size:0.95rem;color:var(--muted)}
-        a {color:var(--accent)}
     </style>
-    <script>
-        // Remplace la photo de profil par une image en ligne (taille 400x400).
-        // Vous pouvez remplacer l'URL ci-dessous par une autre si souhaité.
-        document.addEventListener('DOMContentLoaded', function () {
-            var img = document.querySelector('.avatar');
-            if (img) {
-                img.src = 'https://picsum.photos/seed/angelique/400';
-                img.alt = 'Photo de profil';
-            }
-        });
-    </script>
 </head>
 <body>
     <div class="container">
-        <header>
-            <a class="logo" href="index.html">Mon Portfolio</a>
-            <nav>
-                <a href="index.html">Accueil</a>
-                <a href="about.html">À propos</a>
-                <a href="services.html">Services</a>
-                <a href="hobbies.html">Hobbies</a>
-                <a href="guestbook.html">Guestbook</a>
-                <a href="contact.html">Contact</a>
-            </nav>
-        </header>
+      <header>
+        <a class="logo" href="index.html">Mon Portfolio</a>
+        <nav>
+          <a href="index.html">Accueil</a>
+          <a href="about.html">À propos</a>
+          <a href="services.html">Services</a>
+          <a href="hobbies.html">Hobbies</a>
+          <a href="guestbook.html">Guestbook</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+      </header>
 
-        <main class="card" role="main">
-            <section class="profile">
-                <img class="avatar" src="assets/profile.jpg" alt="Photo de profil — votre nom">
-                <div>
-                    <h1>Bonjour, je suis [Votre Nom]</h1>
-                    <p class="lead">Développeur·se web / Designer d'interface — j'aide les entreprises à créer des expériences numériques claires, accessibles et performantes.</p>
-                    <div class="meta">
-                        Basé·e à [Ville] • Disponible pour freelances & CDI • <a href="contact.html">Me contacter</a>
-                    </div>
-                </div>
-            </section>
-
-            <div class="grid" style="margin-top:20px">
-                <section class="card" aria-labelledby="about-title" style="padding:18px">
-                    <h2 id="about-title" class="section-title">À propos</h2>
-                    <p class="small">Je suis spécialisé·e en développement front-end (HTML, CSS, JavaScript) et j'ai de l'expérience sur des projets d'interface utilisateur, design system et optimisation des performances. J'aime transformé des idées en produits utilisables et esthétiques.</p>
-
-                    <h3 class="section-title" style="margin-top:14px">Expérience</h3>
-                    <ul class="small" style="padding-left:16px;margin-top:6px">
-                        <li><strong>2022 — Présent :</strong> Développeur·se front-end — Entreprise X</li>
-                        <li><strong>2019 — 2022 :</strong> Intégrateur·rice web — Agence Y</li>
-                    </ul>
-
-                    <h3 class="section-title" style="margin-top:14px">Éducation</h3>
-                    <p class="small" style="margin-top:6px">Licence en Informatique / DUT / Formation en développement web</p>
-
-                    <a class="cta" href="index.html">Voir mes projets</a>
-                </section>
-
-                <aside class="card" aria-labelledby="skills-title" style="padding:18px">
-                    <h2 id="skills-title" class="section-title">Compétences</h2>
-                    <ul class="skills" style="padding-left:0;margin-top:8px;">
-                        <li>
-                            <div class="small">HTML & CSS — 95%</div>
-                            <div class="bar" aria-hidden="true"><i style="width:95%"></i></div>
-                        </li>
-                        <li>
-                            <div class="small">JavaScript — 85%</div>
-                            <div class="bar"><i style="width:85%"></i></div>
-                        </li>
-                        <li>
-                            <div class="small">React / Vue — 75%</div>
-                            <div class="bar"><i style="width:75%"></i></div>
-                        </li>
-                        <li>
-                            <div class="small">UX / UI — 80%</div>
-                            <div class="bar"><i style="width:80%"></i></div>
-                        </li>
-                    </ul>
-
-                    <h3 class="section-title" style="margin-top:12px">Outils</h3>
-                    <p class="small">Git · Figma · VSCode · Webpack · Tailwind</p>
-
-                    <div style="margin-top:14px" id="contact">
-                        <h3 class="section-title">Contact</h3>
-                        <p class="small">Email : <a href="mailto:votremail@example.com">votremail@example.com</a></p>
-                        <p style="margin-top:8px">
-                            <a class="small" href="https://www.linkedin.com" aria-label="LinkedIn">LinkedIn</a> ·
-                            <a class="small" href="https://github.com" aria-label="GitHub">GitHub</a>
-                        </p>
-                    </div>
-                </aside>
+      <main class="card" role="main">
+        <section class="profile">
+          <img
+            class="avatar"
+            src="assets/profile.jpg"
+            alt="Photo de profil — votre nom"
+          />
+          <div>
+            <h1>Bonjour, je suis [Votre Nom]</h1>
+            <p class="lead">
+              Développeur·se web / Designer d'interface — j'aide les entreprises
+              à créer des expériences numériques claires, accessibles et
+              performantes.
+            </p>
+            <div class="meta">
+              Basé·e à [Ville] • Disponible pour freelances & CDI •
+              <a href="contact.html">Me contacter</a>
             </div>
-        </main>
+          </div>
+        </section>
 
-        <footer>
-            © <span id="year"></span> [Angelique Nkot] — Conçu avec HTML & CSS
-        </footer>
+        <div class="grid" style="margin-top: 20px">
+          <section
+            class="card"
+            aria-labelledby="about-title"
+            style="padding: 18px"
+          >
+            <h2 id="about-title" class="section-title">À propos</h2>
+            <p class="small">
+              Je suis spécialisé·e en développement front-end (HTML, CSS,
+              JavaScript) et j'ai de l'expérience sur des projets d'interface
+              utilisateur, design system et optimisation des performances.
+              J'aime transformer des idées en produits utilisables et
+              esthétiques.
+            </p>
+
+            <h3 class="section-title" style="margin-top: 14px">Expérience</h3>
+            <ul class="small" style="padding-left: 16px; margin-top: 6px">
+              <li>
+                <strong>2022 — Présent :</strong> Développeur·se front-end —
+                Entreprise X
+              </li>
+              <li>
+                <strong>2019 — 2022 :</strong> Intégrateur·rice web — Agence Y
+              </li>
+            </ul>
+
+            <h3 class="section-title" style="margin-top: 14px">Éducation</h3>
+            <p class="small" style="margin-top: 6px">
+              Licence en Informatique / DUT / Formation en développement web
+            </p>
+
+            <a class="cta" href="index.html">Voir mes projets</a>
+          </section>
+
+          <aside
+            class="card"
+            aria-labelledby="skills-title"
+            style="padding: 18px"
+          >
+            <h2 id="skills-title" class="section-title">Compétences</h2>
+            <ul class="skills" style="padding-left: 0; margin-top: 8px">
+              <li>
+                <div class="small">HTML & CSS — 95%</div>
+                <div class="bar" aria-hidden="true">
+                  <i style="width: 95%"></i>
+                </div>
+              </li>
+              <li>
+                <div class="small">JavaScript — 85%</div>
+                <div class="bar"><i style="width: 85%"></i></div>
+              </li>
+              <li>
+                <div class="small">React / Vue — 75%</div>
+                <div class="bar"><i style="width: 75%"></i></div>
+              </li>
+              <li>
+                <div class="small">UX / UI — 80%</div>
+                <div class="bar"><i style="width: 80%"></i></div>
+              </li>
+            </ul>
+
+            <h3 class="section-title" style="margin-top: 12px">Outils</h3>
+            <p class="small">Git · Figma · VSCode · Webpack · Tailwind</p>
+
+            <div style="margin-top: 14px" id="contact">
+              <h3 class="section-title">Contact</h3>
+              <p class="small">
+                Email :
+                <a href="mailto:votremail@example.com">votremail@example.com</a>
+              </p>
+              <p style="margin-top: 8px">
+                <a
+                  class="small"
+                  href="https://www.linkedin.com"
+                  aria-label="LinkedIn"
+                  >LinkedIn</a
+                >
+                ·
+                <a class="small" href="https://github.com" aria-label="GitHub"
+                  >GitHub</a
+                >
+              </p>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      <footer>
+        © <span id="year"></span> [Angelique Nkot] — Conçu avec HTML & CSS
+      </footer>
     </div>
 
     <script>
-        document.getElementById('year').textContent = new Date().getFullYear();
+      document.getElementById("year").textContent = new Date().getFullYear();
     </script>
-</body>
+  </body>
 </html>
