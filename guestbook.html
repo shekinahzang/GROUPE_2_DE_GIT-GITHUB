@@ -82,32 +82,25 @@
         <h1>Livre d'or — Laissez un avis</h1>
       </header>
 
-      <section class="card" aria-labelledby="form-title">
-        <h2 id="form-title" class="small">Votre avis</h2>
-        <form id="guestbookForm" novalidate>
-          <div class="row">
-            <div style="flex: 1">
-              <label for="name">Nom <span class="muted">*</span></label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                placeholder="Votre nom ou pseudo"
-                maxlength="60"
-              />
-            </div>
-            <div style="width: 220px">
-              <label for="rating">Note</label>
-              <select id="rating" name="rating" aria-label="Note">
-                <option value="5">★★★★★ 5</option>
-                <option value="4">★★★★ 4</option>
-                <option value="3">★★★ 3</option>
-                <option value="2">★★ 2</option>
-                <option value="1">★ 1</option>
-              </select>
-            </div>
-          </div>
+        <section class="card" aria-labelledby="form-title">
+            <h2 id="form-title" class="small">Votre avis</h2>
+            <form id="guestbookForm" novalidate>
+                <div class="row">
+                    <div style="flex:1">
+                        <label for="name">Nom <span class="muted">*</span></label>
+                        <input id="name" name="name" type="text" required placeholder="Votre nom ou pseudo" maxlength="60" />
+                    </div>
+                    <div style="width:220px">
+                        <label for="rating">Note</label>
+                        <select id="rating" name="rating" aria-label="Note">
+                            <option value="5">★★★★★ 5</option>
+                            <option value="4">★★★★ 4</option>
+                            <option value="3">★★★ 3</option>
+                            <option value="2">★★ 2</option>
+                            <option value="1">★ 1</option>
+                        </select>
+                    </div>
+                </div>
 
           <div style="margin-top: 12px">
             <label for="email">Email (optionnel)</label>
@@ -119,25 +112,14 @@
             />
           </div>
 
-          <div style="margin-top: 12px">
-            <label for="comment"
-              >Commentaire <span class="muted">*</span></label
-            >
-            <textarea
-              id="comment"
-              name="comment"
-              required
-              maxlength="1000"
-              placeholder="Dites-nous ce que vous pensez..."
-            ></textarea>
-            <div style="display: flex; align-items: center; margin-top: 6px">
-              <span class="muted small"
-                >Merci de rester courtois — les propos offensants seront
-                supprimés.</span
-              >
-              <span id="charCount" class="charcount">0 / 1000</span>
-            </div>
-          </div>
+                <div style="margin-top:12px">
+                    <label for="comment">Commentaire <span class="muted">*</span></label>
+                    <textarea id="comment" name="comment" required maxlength="1000" placeholder="Dites-nous ce que vous pensez..."></textarea>
+                    <div style="display:flex;align-items:center;margin-top:6px">
+                        <span class="muted small">Merci de rester courtois — les propos offensants seront supprimés.</span>
+                        <span id="charCount" class="charcount">0 / 1000</span>
+                    </div>
+                </div>
 
           <div class="actions">
             <button type="submit">Publier</button>
@@ -149,23 +131,16 @@
         </form>
       </section>
 
-      <section class="card" aria-labelledby="list-title">
-        <h2 id="list-title" class="small">Avis des visiteurs</h2>
-        <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-          "
-        >
-          <div class="muted small">Derniers avis en haut</div>
-          <div>
-            <button class="ghost" id="clearAllBtn">Supprimer tout</button>
-          </div>
-        </div>
-        <div id="entries" class="entries" aria-live="polite"></div>
-      </section>
+        <section class="card" aria-labelledby="list-title">
+            <h2 id="list-title" class="small">Avis des visiteurs</h2>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <div class="muted small">Derniers avis en haut</div>
+                <div>
+                    <button class="ghost" id="clearAllBtn">Supprimer tout</button>
+                </div>
+            </div>
+            <div id="entries" class="entries" aria-live="polite"></div>
+        </section>
     </div>
 
     <script>
@@ -346,5 +321,13 @@
       // initial render
       renderEntries();
     </script>
+<<<<<<< HEAD
+=======
+  </body>
+    <footer>
+  <p>© 2025 Groupe 2 - Contributeur : Abigaël Komdjam</p>
+</footer>
+
+>>>>>>> origin/Shekinah_Zang
 </body>
 </html>

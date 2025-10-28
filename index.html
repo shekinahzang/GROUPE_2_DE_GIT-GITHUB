@@ -101,6 +101,43 @@
     }
 </style>
 
+    <style>
+        :root{
+            --bg:#0f1724; --card:#0b1220; --accent:#06b6d4; --muted:#9aa4b2; --text:#e6eef3;
+            --glass: rgba(255,255,255,0.03);
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%; margin:0; background:linear-gradient(180deg,#071020 0%, #071827 60%); color:var(--text);}
+        .container{max-width:1100px; margin:0 auto; padding:28px;}
+        header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+        .brand{display:flex;align-items:center;gap:12px}
+        .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700}
+        nav a{color:var(--muted);text-decoration:none;margin-left:18px;font-size:0.95rem}
+        nav a:hover{color:var(--text)}
+        main{margin-top:40px}
+        .hero{display:grid;grid-template-columns:1fr 360px;gap:28px;align-items:center}
+        .intro h1{margin:0 0 8px 0;font-size:clamp(1.6rem,3.6vw,2.6rem)}
+        .intro p{margin:0 0 18px;color:var(--muted);line-height:1.5}
+        .cta{display:flex;gap:12px}
+        .btn{padding:10px 14px;border-radius:10px;background:var(--accent);color:#04293a;text-decoration:none;font-weight:600}
+        .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
+        .profile-card{background:var(--card);padding:18px;border-radius:14px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+        .profile-card img{width:100%;border-radius:10px;display:block}
+        .section{margin-top:40px}
+        .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+        .project{background:var(--glass);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+        .project h3{margin:0 0 6px 0;font-size:1.05rem}
+        .project p{margin:0;color:var(--muted);font-size:0.95rem}
+        .skills{display:flex;flex-wrap:wrap;gap:8px}
+        .chip{background:rgba(255,255,255,0.03);padding:8px 10px;border-radius:999px;color:var(--muted);font-size:0.9rem}
+        footer{margin-top:44px;padding:24px 0;border-top:1px dashed rgba(255,255,255,0.03);text-align:center;color:var(--muted);font-size:0.9rem}
+        .project a{color:inherit;text-decoration:none;display:block}
+        @media (max-width:880px){
+            .hero{grid-template-columns:1fr}
+            nav{display:none}
+        }
+    </style>
 </head>
 <body>
     <a class="skip-link" href="#main">Aller au contenu</a>
@@ -129,6 +166,7 @@
             <section class="hero">
                 <div class="intro">
                     <h1>Bonjour, je suis Prénom — je conçois et développe des interfaces web modernes.</h1>
+                    <h1>Salut, je suis Prénom — je conçois et développe des interfaces web modernes.</h1>
                     <p>Je crée des expériences simples, rapides et accessibles. Spécialiste front-end, j'aime transformer des idées en produits réels.</p>
                     <div class="cta">
                         <a class="btn" href="services.html">Mes services</a>
@@ -147,6 +185,10 @@
                     <div style="margin-top:12px">
                         <div style="font-weight:700">Prénom Nom</div>
                         <div style="color:var(--muted);font-size:0.95rem;margin-bottom:10px">Front-end • UI/UX</div>
+                    <img src="img/profile.jpg" style="border-radius:50%" width="120" height="120lt="Photo de profil ou visuel">
+                    <div style="margin-top:12px">
+                        <div style="font-weight:700">Prénom Nom</div>
+                        <div style="color:var(--muted);font-size:0.95rem;margin-bottom:10px">Front-end • Back-end • UI/UX</div>
                         <div class="skills">
                             <span class="chip">HTML</span>
                             <span class="chip">CSS</span>
@@ -240,54 +282,13 @@
         </main>
 
         <footer>
-            © <span id="year"></span> Angelique Nkot — <span style="color:var(--muted)">Développeur web</span>
+            © <span id="year"></span><span style="color:var(--muted)">Développeur web</span>
         </footer>
     </div>
 
     <script>
         // Met à jour l'année
         document.getElementById('year').textContent = new Date().getFullYear();
-
-        // Active l'onglet correspondant à la page courante (pour les deux barres)
-        const tabsContainer = document.createElement('div');
-        tabsContainer.classList.add('tabs');
-
-        const tabLinks = [
-            { href: 'index.html', text: 'Accueil' },
-            { href: 'services.html', text: 'Services' },
-            { href: 'hobbies.html', text: 'Hobbies' },
-            { href: 'guestbook.html', text: 'Livre d\'or' },
-            { href: 'contact.html', text: 'Contact' },
-            { href: 'about.html', text: 'À propos' }
-        ];
-
-        tabLinks.forEach(link => {
-            const tab = document.createElement('a');
-            tab.href = link.href;
-            tab.classList.add('tab');
-            tab.textContent = link.text;
-            tabsContainer.appendChild(tab);
-        });
-
-        document.querySelector('header').insertBefore(tabsContainer, document.querySelector('.header-actions'));
-        (function markActiveTabs(){
-            const tabs = document.querySelectorAll('.tab');
-            const tabsList = document.querySelectorAll('.tabs .tab');
-            const filename = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
-            function setActive(list){
-                list.forEach(a => {
-                    const href = a.getAttribute('href') || '';
-                    const target = href.split('/').pop().toLowerCase();
-                    if(target === filename || (filename === '' && target === 'index.html')){
-                        a.classList.add('active');
-                        a.setAttribute('aria-current','page');
-                    } else {
-                        a.classList.remove('active');
-                        a.removeAttribute('aria-current');
-                    }
-                });
-            }
-            setActive(tabs);
-            setActive(tabsList);
-        })();
     </script>
+</body>
+</html>
