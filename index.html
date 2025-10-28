@@ -60,7 +60,10 @@
                 <!-- Liens vers les autres pages du dossier -->
                 <a href="services.html">Services</a>
                 <a href="hobbies.html">Hobbies</a>
-                <a href="guestbook.html">Livre d'or</a>
+                <a href="guestbook.html">Guestbook</a>
+                <a href="contact.html">Contact</a>
+                <a href="projects.html">Projets</a>
+                <a href="about.html">À propos</a>
             </nav>
         </header>
 
@@ -80,12 +83,12 @@
                     </div>
                 </div>
 
-                <aside class="profile-card" aria-label="Carte de profil">
-                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='360'><rect width='100%' height='100%' fill='%2311221a'/><text x='50%' y='50%' font-size='28' fill='%23ccd6dd' text-anchor='middle' alignment-baseline='middle'>Photo / Visuel</text></svg>" alt="Photo de profil ou visuel">
+                <aside class="profile-card" aria-label="Carte de profil"></aside>
+                    <img src="img/profile.jpg" style="border-radius:50%" width="120" height="120lt="Photo de profil ou visuel">
                     <div style="margin-top:12px">
                         <div style="font-weight:700">Prénom Nom</div>
-                        <div style="color:var(--muted);font-size:0.95rem;margin-bottom:10px">Front-end • UI/UX</div>
-                        <div class="skills" aria-label="Compétences">
+                        <div style="color:var(--muted);font-size:0.95rem;margin-bottom:10px">Front-end • Back-end • UI/UX</div>
+                        <div class="skills">
                             <span class="chip">HTML</span>
                             <span class="chip">CSS</span>
                             <span class="chip">JavaScript</span>
@@ -138,7 +141,7 @@
         </main>
 
         <footer>
-            © <span id="year"></span> Angelique Nkot — <span style="color:var(--muted)">Développeur web</span>
+            © <span id="year"></span><span style="color:var(--muted)">Développeur web</span>
         </footer>
     </div>
 
@@ -178,54 +181,13 @@
         </main>
 
         <footer>
-            © <span id="year"></span> Angelique Nkot — <span style="color:var(--muted)">Développeur web</span>
+            © <span id="year"></span><span style="color:var(--muted)">Développeur web</span>
         </footer>
     </div>
 
     <script>
         // Met à jour l'année
         document.getElementById('year').textContent = new Date().getFullYear();
-
-        // Active l'onglet correspondant à la page courante (pour les deux barres)
-        const tabsContainer = document.createElement('div');
-        tabsContainer.classList.add('tabs');
-
-        const tabLinks = [
-            { href: 'index.html', text: 'Accueil' },
-            { href: 'services.html', text: 'Services' },
-            { href: 'hobbies.html', text: 'Hobbies' },
-            { href: 'guestbook.html', text: 'Livre d\'or' },
-            { href: 'contact.html', text: 'Contact' },
-            { href: 'about.html', text: 'À propos' }
-        ];
-
-        tabLinks.forEach(link => {
-            const tab = document.createElement('a');
-            tab.href = link.href;
-            tab.classList.add('tab');
-            tab.textContent = link.text;
-            tabsContainer.appendChild(tab);
-        });
-
-        document.querySelector('header').insertBefore(tabsContainer, document.querySelector('.header-actions'));
-        (function markActiveTabs(){
-            const tabs = document.querySelectorAll('.tab');
-            const tabsList = document.querySelectorAll('.tabs .tab');
-            const filename = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
-            function setActive(list){
-                list.forEach(a => {
-                    const href = a.getAttribute('href') || '';
-                    const target = href.split('/').pop().toLowerCase();
-                    if(target === filename || (filename === '' && target === 'index.html')){
-                        a.classList.add('active');
-                        a.setAttribute('aria-current','page');
-                    } else {
-                        a.classList.remove('active');
-                        a.removeAttribute('aria-current');
-                    }
-                });
-            }
-            setActive(tabs);
-            setActive(tabsList);
-        })();
     </script>
+</body>
+</html>
