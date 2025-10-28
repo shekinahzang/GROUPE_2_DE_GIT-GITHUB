@@ -1,35 +1,133 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>À propos — Portfolio</title>
     <style>
-        :root{--bg:#f7f8fb;--card:#fff;--accent:#0066cc;--muted:#6b7280}
-        *{box-sizing:border-box}
-        body{font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;margin:0;background:var(--bg);color:#111;line-height:1.5}
-        .container{max-width:960px;margin:36px auto;padding:24px}
-        header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
-        a.logo{font-weight:700;color:var(--accent);text-decoration:none}
-        nav a{color:var(--muted);text-decoration:none;margin-left:12px}
-        .card{background:var(--card);padding:20px;border-radius:12px;box-shadow:0 4px 18px rgba(15,23,42,0.06)}
-        .profile{display:flex;gap:20px;align-items:center}
-        .avatar{width:120px;height:120px;border-radius:12px;object-fit:cover;background:#e6eefc;flex:0 0 120px}
-        h1{margin:0 0 6px 0;font-size:1.6rem}
-        p.lead{margin:0;color:var(--muted)}
-        .meta{margin-top:14px;color:var(--muted);font-size:0.95rem}
-        .grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:18px}
-        @media(min-width:720px){.grid{grid-template-columns:1fr 320px}}
-        .skills li{list-style:none;margin-bottom:12px}
-        .bar{background:#eef2ff;border-radius:999px;height:10px;overflow:hidden}
-        .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#2b82ff);border-radius:999px}
-        .section-title{font-weight:600;margin-bottom:8px}
-        footer{margin-top:22px;text-align:center;color:var(--muted);font-size:0.9rem}
-        .cta{display:inline-block;margin-top:12px;padding:8px 14px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none}
-        .small{font-size:0.95rem;color:var(--muted)}
+      :root {
+        --bg: #f7f8fb;
+        --card: #fff;
+        --accent: #0066cc;
+        --muted: #6b7280;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Inter, Segoe UI, Helvetica, Arial, sans-serif;
+        margin: 0;
+        background: var(--bg);
+        color: #111;
+        line-height: 1.5;
+      }
+      .container {
+        max-width: 960px;
+        margin: 36px auto;
+        padding: 24px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      a.logo {
+        font-weight: 700;
+        color: var(--accent);
+        text-decoration: none;
+      }
+      nav a {
+        color: var(--muted);
+        text-decoration: none;
+        margin-left: 12px;
+      }
+      .card {
+        background: var(--card);
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+      }
+      .profile {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+      .avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 12px;
+        object-fit: cover;
+        background: #e6eefc;
+        flex: 0 0 120px;
+      }
+      h1 {
+        margin: 0 0 6px 0;
+        font-size: 1.6rem;
+      }
+      p.lead {
+        margin: 0;
+        color: var(--muted);
+      }
+      .meta {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-top: 18px;
+      }
+      @media (min-width: 720px) {
+        .grid {
+          grid-template-columns: 1fr 320px;
+        }
+      }
+      .skills li {
+        list-style: none;
+        margin-bottom: 12px;
+      }
+      .bar {
+        background: #eef2ff;
+        border-radius: 999px;
+        height: 10px;
+        overflow: hidden;
+      }
+      .bar > i {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), #2b82ff);
+        border-radius: 999px;
+      }
+      .section-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      footer {
+        margin-top: 22px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .cta {
+        display: inline-block;
+        margin-top: 12px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #fff;
+        text-decoration: none;
+      }
+      .small {
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
         <header>
             <a class="logo" href="index.html">Mon Portfolio</a>
@@ -106,16 +204,23 @@
                         </p>
                     </div>
                 </aside>
-            </div>
-        </main>
+      
 
-        <footer>
-            © <span id="year"></span> Conçu avec HTML & CSS
-        </footer>
+      
+
+        
+
+      <footer>
+        © <span id="year"></span> [Angelique Nkot] — Conçu avec HTML & CSS
+      </footer>
     </div>
 
     <script>
-        document.getElementById('year').textContent = new Date().getFullYear();
+      document.getElementById("year").textContent = new Date().getFullYear();
     </script>
-</body>
+    <p>Projet réalisé dans le cadre du travail de groupe GitHub.</p>
+    <footer>
+      <p>© 2025 Groupe 2 - Contributeur : Abigaël Komdjam</p>
+    </footer>
+  </body>
 </html>
