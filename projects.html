@@ -118,9 +118,13 @@
             </div>
 
             <!-- Liens vers les pages du dossier -->
+             <a class="btn" href="index.html">Accueil</a>
             <a class="btn" href="guestbook.html">Guestbook</a>
             <a class="btn" href="hobbies.html">Hobbies</a>
             <a class="btn" href="services.html">Services</a>
+            <a class="btn" href="projects.html">Projets</a>
+            <a class="btn" href="contact.html">Contact</a>
+            <a class="btn" href="about.html">À propos</a>
         </div>
     </header>
 
@@ -128,7 +132,7 @@
         <section class="grid" id="projects">
             <!-- Chaque card représente un projet. Modifiez le contenu / images / liens. -->
             <article class="card" data-tags="web,opensource">
-                <div class="thumb"><img src="https://picsum.photos/seed/p1/800/450" alt="Aperçu projet 1"></div>
+                <div class="thumb"><img src="img/profile.jpg" alt="Aperçu projet 1"></div>
                 <div class="card-body">
                     <h3 class="title">Portfolio personnel</h3>
                     <p class="desc">Site responsive construit avec HTML, CSS et un peu de JavaScript. Déploiement CI/CD.</p>
@@ -144,39 +148,61 @@
                 </div>
             </article>
 
-            <article class="card" data-tags="web,mobile"></article>
-                <div class="thumb"><img src="https://picsum.photos/seed/p2/800/450" alt="Aperçu projet 2"></div>
+            <article class="card" data-tags="web,opensource">
+                <div class="thumb"><img src="img/site-internet-vitrine-5-6-6-412.jpg" alt="Aperçu projet 1"></div>
                 <div class="card-body">
-                    <h3 class="title">Application de recettes</h3>
-                    <p class="desc">PWA pour consulter et sauvegarder des recettes, synchronisation hors-ligne.</p>
+                    <h3 class="title">Site vitrine pour entreprise locale</h3>
+                    <p class="desc">Site web pour presenter les services d'une entrprise locale, avec formulaire de contact et galerie photo</p>
                     <div class="tags">
-                        <span class="tag">PWA</span>
-                        <span class="tag">Service Worker</span>
-                        <span class="tag">React</span>
+                        <span class="tag">HTML</span>
+                        <span class="tag">CSS</span>
+                        <span class="tag">JavaScript</span>
+                        <span class="tag">Bootstrap</span>
                     </div>
                     <div class="actions">
-                        <button class="btn" data-action="open">Voir</button>
-                        <a class="btn" href="recipes.html" target="_blank" rel="noopener">App</a>
+                        <button class="btn" data-action="open" aria-label="Ouvrir détails Portfolio personnel">Voir</button>
+                        <a class="btn primary" href="#" target="_blank" rel="noopener">Live</a>
                     </div>
                 </div>
             </article>
 
-            <article class="card" data-tags="data">
-                <div class="thumb"><img src="https://picsum.photos/seed/p3/800/450" alt="Aperçu projet 3"></div>
+            <article class="card" data-tags="web,opensource">
+                <div class="thumb"><img src="img/Final-1.png" alt="Aperçu projet 1"></div>
                 <div class="card-body">
-                    <h3 class="title">Dashboard Analytics</h3>
-                    <p class="desc">Tableaux de bord avec visualisations temps réel et alertes personnalisées.</p>
+                    <h3 class="title">Dashboard d'analyse des ventes</h3>
+                    <p class="desc">Tableau de bord interactif pour visualiser les ventes d'une entrprise, avec graphiques et filtres dynamiques</p>
                     <div class="tags">
-                        <span class="tag">D3</span>
-                        <span class="tag">Node</span>
-                        <span class="tag">Data</span>
+                        <span class="tag">React</span>
+                        <span class="tag">Chart.js</span>
+                        <span class="tag">Node.js</span>
+                        <span class="tag">MongoDB</span>
                     </div>
                     <div class="actions">
-                        <button class="btn" data-action="open">Voir</button>
-                        <a class="btn" href="analytics.html" target="_blank" rel="noopener">Demo</a>
+                        <button class="btn" data-action="open" aria-label="Ouvrir détails Portfolio personnel">Voir</button>
+                        <a class="btn primary" href="#" target="_blank" rel="noopener">Live</a>
                     </div>
                 </div>
             </article>
+
+            <article class="card" data-tags="mobile,opensource">
+                <div class="thumb"><img src="img/mobile.jpg" alt="Aperçu projet 1"></div>
+                <div class="card-body">
+                    <h3 class="title">BusGO - Application de reservation de bus</h3>
+                    <p class="desc">Reservation en ligne de billets de bus, consultation des horaires, notifiactions en temps reel et historique de voyages.</p>
+                    <div class="tags">
+                        <span class="tag">Flutter</span>
+                        <span class="tag">Firebase</span>
+                        <span class="tag">React API</span>
+                        <span class="tag">Git</span>
+                        <span class="tag">Google Maps API</span>
+                    </div>
+                    <div class="actions">
+                        <button class="btn" data-action="open" aria-label="Ouvrir détails Portfolio personnel">Voir</button>
+                        <a class="btn primary" href="#" target="_blank" rel="noopener">APP</a>
+                    </div>
+                </div>
+            </article>
+
 
             <article class="card" data-tags="web,opensource">
                 <div class="thumb"><img src="https://picsum.photos/seed/p4/800/450" alt="Aperçu projet 4"></div>
