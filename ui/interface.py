@@ -1,12 +1,9 @@
-# ui/interface.py
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 
 from calculator.safe_eval import evaluer_expression
 from converters.units import convertir_longueur, convertir_masse, convertir_temperature
 from converters.currency import convertir_devise
-
 
 def lancer_interface() -> None:
     fenetre = tk.Tk()
@@ -23,12 +20,18 @@ def lancer_interface() -> None:
     onglets.add(onglet_devises, text="Convertisseur de devises")
     onglets.pack(expand=1, fill="both")
 
-    # 🧮 Onglet Calculatrice
-    champ_expr = tk.Entry(onglet_calc, width=40)
-    champ_expr.pack(pady=10)
+    # 🧮 Onglet Calculatrice améliorée
+    champ_expr = tk.Entry(onglet_calc, width=30, font=("Arial", 16), justify="right")
+    champ_expr.grid(row=0, column=0, columnspan=4, pady=10)
 
-    label_resultat_calc = tk.Label(onglet_calc, text="Résultat :")
-    label_resultat_calc.pack()
+    label_resultat_calc = tk.Label(onglet_calc, text="Résultat :", font=("Arial", 14))
+    label_resultat_calc.grid(row=1, column=0, columnspan=4)
+
+    def ajouter_caractere(caractere: str) -> None:
+        champ_expr.insert(tk.END, caractere)
+
+    def effacer() -> None:
+        champ_expr.delete(0, tk.END)
 
     def calculer_expression() -> None:
         expr = champ_expr.get()
@@ -38,8 +41,23 @@ def lancer_interface() -> None:
         except Exception as e:
             messagebox.showerror("Erreur", f"Expression invalide : {e}")
 
-    bouton_calc = tk.Button(onglet_calc, text="Calculer", command=calculer_expression)
-    bouton_calc.pack(pady=5)
+    boutons = [
+        ("7", 2, 0), ("8", 2, 1), ("9", 2, 2), ("/", 2, 3),
+        ("4", 3, 0), ("5", 3, 1), ("6", 3, 2), ("*", 3, 3),
+        ("1", 4, 0), ("2", 4, 1), ("3", 4, 2), ("-", 4, 3),
+        ("0", 5, 0), (".", 5, 1), ("C", 5, 2), ("+", 5, 3),
+        ("=", 6, 0, 4)
+    ]
+
+    for texte, ligne, colonne, *colspan in boutons:
+        span = colspan[0] if colspan else 1
+        action = (
+            calculer_expression if texte == "=" else
+            effacer if texte == "C" else
+            lambda t=texte: ajouter_caractere(t)
+        )
+        tk.Button(onglet_calc, text=texte, width=6, height=2, font=("Arial", 12),
+                  command=action).grid(row=ligne, column=colonne, columnspan=span, padx=2, pady=2)
 
     # 📏 Onglet Unités
     types_unites = ["longueur", "masse", "température"]
