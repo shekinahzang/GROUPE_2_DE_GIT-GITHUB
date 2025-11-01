@@ -1,2 +1,6 @@
 requests
 mypy
+tqdm
+pyyaml
+python-dotenv
+google-genai
