@@ -1,3 +1,3 @@
 # ui/__init__.py
 
-from .interface import lancer_interface
+from .intface import lancer_interface
