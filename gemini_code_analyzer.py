@@ -250,7 +250,7 @@ def send_push_rejection_email(recipient_email, reason_summary, detailed_report, 
     """
     
     # Récupération des détails SMTP (depuis l'environnement)
-    smtp_server = os.getenv("SMTP_SERVER")
+    smt_server = os.getenv("SMTP_SERVER")
     smtp_port = os.getenv("SMTP_PORT", 587)
     smtp_user = os.getenv("SMTP_USER")
     smtp_password = os.getenv("SMTP_PASSWORD")
