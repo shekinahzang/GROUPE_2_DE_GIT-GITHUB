@@ -1,0 +1,34 @@
+
+# --- Configuration du Modèle et de la Performance ---
+# .geminianalyzer.yml
+    
+# --- Configuration du Modèle et de la Performance ---
+analyzer:
+  model_name: gemini-2.5-flash
+  max_file_size_kb: 500
+  # Si True, toute réponse de l'IA qui n'est pas "CODE_VALIDÉ" et ne contient
+  # pas les tags [CRITICAL_ERROR] ou [WARNING] sera considérée comme CRITICAL_ERROR (Bloquant).
+  # Si False, ces cas seront de simples WARNINGs.
+  strict_untagged_output: True 
+
+  # Extensions de fichiers qui seront analysées
+  analyzable_extensions: 
+    - .py
+    - .js
+    - .ts
+    - .tsx
+    - .jsx
+    - .html
+    - .css
+    - .scss
+    - .java
+    - .php
+    - .json
+    - .yml
+
+# --- Règles Spécifiques du Projet ---
+# Ces règles seront ajoutées au prompt de Gemini.
+rules_override: |
+  - Interdire l'utilisation de 'var' en JavaScript (utiliser 'let' ou 'const').
+  - Assurer que toutes les requêtes SQL (si présentes) utilisent des requêtes préparées pour éviter l'injection.
+  - Tous les composants React doivent être des fonctions et non des classes.
