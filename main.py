@@ -1,6 +1,6 @@
 # main.py
 
-from ui.inteface import lancer_interface
+from ui.interface import lancer_interface
 
-if __nam__ == "__main__":
+if __name__ == "__main__":
     lancer_interface()
