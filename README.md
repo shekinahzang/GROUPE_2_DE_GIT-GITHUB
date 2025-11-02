@@ -1,4 +1,4 @@
-📌 Calculatrice & Convertisseur (Python)
+# 📌 Calculatrice & Convertisseur (Python)
 
 Ce projet est une application python permettant :
 
@@ -27,11 +27,28 @@ calculatrice_convertisseur/
 Python 3.10+
 
 
-🛠️ Installation
+# 🛠️ Installation
+
 1️⃣ Ouvrir le dossier du projet
 cd chemin/vers/calculatrice_convertisseur
 
-2️⃣ Installer les dépendances
+# Configuration de l'Environnement Python
+
+Il est fortement recommandé d'utiliser un environnement virtuel (venv) pour isoler les dépendances du projet.
+
+Créez et activez l'environnement virtuel :
+
+Bash
+
+python3 -m venv venv
+source venv/bin/activate   # macOS/Linux
+# ou
+.\venv\Scripts\activate    # Windows
+Installez les dépendances nécessaires (SDK Google GenAI et python-dotenv) :
+
+
+
+# 2️⃣ Installer les dépendances
 
 Windows (PowerShell) :
 
@@ -47,7 +64,7 @@ Si pip n'est pas reconnu sur Windows, essaye :
 
 py -m pip install -r requirements.txt
 
-🚀 Lancer l'application
+# 🚀 Lancer l'application
 python main.py
 
 
