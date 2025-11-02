@@ -1,0 +1,44 @@
+
+name: Revue de Code Critique (ESLint + Gemini)
+
+on:
+  push:
+    # ... (branches inchangées) ...
+  pull_request:
+    # ... (branches inchangées) ...
+  workflow_dispatch:
+
+jobs:
+  code_quality_check:
+    runs-on: ubuntu-latest
+    
+    # 1. Définition des variables dynamiques (pusher's info)
+    env:
+      # NOUVEAU: Détecte l'e-mail et le nom de l'utilisateur qui a déclenché l'événement.
+      # Pour 'push' (y compris les commits en ligne)
+      PUSHER_EMAIL: ${{ github.event.pusher.email || github.event.pull_request.user.email }}
+      PUSHER_NAME: ${{ github.event.pusher.name || github.event.pull_request.user.login }}
+      # Simule la préférence utilisateur (doit être configurée dans les secrets si complexe, 
+      # ou codée en dur si standard pour la CI)
+      PREF_INTEREST: "la sécurité et la performance en ligne" 
+
+    steps:
+      # ... (checkout, setup-python, installation des dépendances inchangés) ...
+      
+      - name: 🔬 Exécution de l'Analyse Statique (ESLint)
+        run: |
+          ./node_modules/.bin/eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0
+        continue-on-error: false
+
+      - name: 🧠 Exécution de l'Analyse Critique par Gemini
+        run: python gemini_code_analyzer.py
+        env:
+          # Les variables de la section 'env' du job sont automatiquement injectées ici.
+          # SECRET (Clé API)
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # SECRETS (SMTP)
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}

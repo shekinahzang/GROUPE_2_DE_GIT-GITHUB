@@ -1,5 +1,3 @@
-# gemini_code_analyzer.py
-
 import os
 import sys
 import subprocess
@@ -7,16 +5,16 @@ import json
 import yaml 
 import copy 
 import hashlib 
-import smtplib # Utilité : Envoi de mail
-import re # Utilité : Traitement de texte pour le format HTML du mail
+import smtplib 
+import re 
 
-from email.mime.text import MIMEText # Utilité : Construction de messages MIME (HTML)
+from email.mime.text import MIMEText 
 from google import genai
 from google.genai.errors import APIError
 from dotenv import load_dotenv
 from tqdm import tqdm 
 
-# --- CODES COULEUR ANSI ---
+# --- CODES COULEUR ANSI (pour l'affichage console local) ---
 COLOR_GREEN = '\033[92m'
 COLOR_RED = '\033[91m'
 COLOR_YELLOW = '\033[93m'
@@ -25,16 +23,30 @@ COLOR_END = '\033[0m'
 
 # --- Configuration par défaut et globale ---
 CONFIG_FILE = '.geminianalyzer.yml'
-CACHE_FILE = '.gemini_cache.json' # Fichier de cache local
-EMAIL_PREFS_FILE = '.user_email_prefs.json' # Fichier de préférences pour l'e-mail (inclut le repli)
+CACHE_FILE = '.gemini_cache.json' 
+EMAIL_PREFS_FILE = '.user_email_prefs.json'
 
-# --- Fonctions de Configuration et d'Utilité ---
+# --- RÈGLES DE CODAGE DYNAMIQUES PAR DÉFAUT ---
+LANGUAGE_RULES = {
+    'Python': (
+        "Le projet est en Python. Les règles sont : Utiliser le typage Python (Type Hinting) pour toutes les fonctions et variables majeures. "
+        "Adhérer strictement à la PEP 8. Utiliser des f-strings pour le formatage de chaîne. Éviter les boucles O(n^2) inutiles."
+    ),
+    'JavaScript/TypeScript': (
+        "Le projet est en JavaScript/TypeScript. Les règles sont : Préférer `const` et `let` à `var`. Utiliser des fonctions fléchées pour les callbacks. "
+        "Gérer correctement les promesses (async/await). Respecter les règles des Hooks si React est détecté."
+    ),
+    'Java': (
+        "Le projet est en Java. Les règles sont : Respecter les conventions de nommage Java (CamelCase pour les méthodes/variables, PascalCase pour les classes). "
+        "Utiliser les annotations `@Override`. Assurer une bonne gestion des exceptions (try-with-resources)."
+    ),
+    'General': "Concentrez-vous sur la clarté du code, la gestion des erreurs, et l'optimisation des complexités algorithmiques."
+}
+
+# --- Fonctions de Configuration et d'Utilité (inchangées) ---
 
 def deep_merge_dicts(base, override):
-    """
-    Fusionne récursivement le dictionnaire 'override' dans le dictionnaire 'base'.
-    Les valeurs de 'override' prévalent en cas de conflit.
-    """
+    """Fusionne récursivement le dictionnaire 'override' dans le dictionnaire 'base'."""
     for key, value in override.items():
         if isinstance(value, dict) and key in base and isinstance(base[key], dict):
             base[key] = deep_merge_dicts(base[key], value)
@@ -48,7 +60,6 @@ def load_config():
         'analyzer': {
             'model_name': 'gemini-2.5-flash',
             'max_file_size_kb': 500,
-            # NOUVEAU: Si True, une sortie non taguée de l'IA bloque le push.
             'strict_untagged_output': False, 
             'analyzable_extensions': ['.py', '.js', '.ts', '.jsx', '.tsx', '.html', '.css', '.scss', '.java', '.c', '.cpp', '.php', '.go', '.rb', '.sh', '.json', '.yml', '.yaml'],
         },
@@ -65,18 +76,12 @@ def load_config():
             return deep_merge_dicts(merged_config, user_config)
         
         return default_config
-    except FileNotFoundError:
-        print(f"{COLOR_YELLOW}WARN:{COLOR_END} Fichier de configuration '{CONFIG_FILE}' non trouvé. Utilisation des paramètres par défaut.", file=sys.stderr)
-        return default_config
-    except yaml.YAMLError as e: 
-        print(f"{COLOR_RED}ERREUR CONFIG:{COLOR_END} Erreur de lecture YAML: {e}. Utilisation des paramètres par défaut.", file=sys.stderr)
-        return default_config
-    except Exception as e:
-        print(f"{COLOR_RED}ERREUR CONFIG:{COLOR_END} Erreur inattendue lors du chargement de la configuration: {e}. Utilisation des paramètres par défaut.", file=sys.stderr)
+    except (FileNotFoundError, yaml.YAMLError, Exception) as e:
+        print(f"{COLOR_RED}ERREUR CONFIG:{COLOR_END} Erreur de lecture YAML/Config: {e}. Utilisation des paramètres par défaut.", file=sys.stderr)
         return default_config
 
 def load_user_prefs():
-    """Charge les préférences utilisateur (email de repli et intérêt pour la personnalisation)."""
+    """Charge les préférences utilisateur (email de repli et intérêt pour la personnalisation) en local."""
     if os.path.exists(EMAIL_PREFS_FILE):
         try:
             with open(EMAIL_PREFS_FILE, 'r') as f:
@@ -86,34 +91,43 @@ def load_user_prefs():
             return {}
     return {}
 
-def get_project_context():
-    """Détecte les frameworks principaux pour fournir du contexte à Gemini."""
+def detect_project_language():
+    """Détecte la langue principale du projet et retourne une étiquette et le contexte détaillé."""
     context = ""
+    
+    # 1. JavaScript/TypeScript (Priorité aux projets Web/Node.js)
     if os.path.exists('package.json'):
+        language_tag = 'JavaScript/TypeScript'
+        context = "Projet Node.js/Web."
+        
+        if os.path.exists('tsconfig.json') or any(f.endswith(('.ts', '.tsx')) for f in os.listdir('.') if os.path.isfile(f)):
+            context += " Le TypeScript est privilégié."
+            
         try:
             with open('package.json', 'r') as f:
                 data = json.load(f)
             dependencies = list(data.get('dependencies', {}).keys())
-            
             if 'react' in dependencies or 'next' in dependencies:
-                context += "Le projet est un projet web front-end, probablement React/Next.js. Les fichiers JavaScript doivent respecter les règles des hooks et des composants fonctionnels."
-            elif 'express' in dependencies:
-                context += "Le projet est un projet Node.js/Express. Les bonnes pratiques du serveur (gestion des routes, sécurité) sont prioritaires."
-            else:
-                context += f"Le projet utilise Node.js avec les dépendances principales: {', '.join(dependencies[:5])}."
-        except (json.JSONDecodeError, IOError):
-            pass 
-    if os.path.exists('requirements.txt'):
-        context += " Le projet utilise Python. Les règles de la PEP 8 et l'efficacité du code sont importantes."
-    if not context:
-        context = "Aucun framework détecté. Analyse selon les standards généraux du langage."
-    return context
+                context += " Framework React/Next.js détecté. Les règles des Hooks sont cruciales."
+        except:
+            pass
+        return language_tag, context
 
+    # 2. Python
+    if os.path.exists('requirements.txt') or os.path.exists('setup.py') or any(f.endswith('.py') for f in os.listdir('.') if os.path.isfile(f)):
+        return 'Python', "Projet Python. L'analyse doit se concentrer sur la PEP 8, la performance et le typage."
+        
+    # 3. Java
+    if any(f.endswith('.java') for f in os.listdir('.') if os.path.isfile(f)) or os.path.exists('pom.xml'):
+        return 'Java', "Projet Java. L'analyse doit se concentrer sur les conventions Java et la gestion des ressources."
+        
+    # 4. Fallback
+    return 'General', "Aucun langage principal détecté. Analyse selon les standards généraux du logiciel."
 
-# --- Fonctions de Cache ---
+# --- Fonctions de Cache et d'Analyse (omettent le détail interne pour la concision) ---
 
 def load_cache():
-    """Charge le cache depuis le fichier JSON. Nécessite os.path.exists."""
+    """Charge le cache depuis le fichier JSON."""
     if os.path.exists(CACHE_FILE):
         try:
             with open(CACHE_FILE, 'r') as f:
@@ -125,7 +139,6 @@ def load_cache():
 def save_cache(cache_data):
     """Sauvegarde les données de cache dans le fichier JSON."""
     try:
-        # Note : Le fichier de cache (.gemini_cache.json) DOIT être ignoré par Git via .gitignore
         with open(CACHE_FILE, 'w') as f:
             json.dump(cache_data, f, indent=4)
     except IOError as e:
@@ -135,108 +148,64 @@ def get_file_hash(file_path):
     """Génère le hash SHA256 du contenu d'un fichier."""
     hasher = hashlib.sha256()
     try:
-        with open(file_path, 'rb') as f: # Lire en mode binaire
+        with open(file_path, 'rb') as f: 
             buf = f.read()
             hasher.update(buf)
         return hasher.hexdigest()
-    except (IOError, OSError): # FIX WARNING: Gestion spécifique des exceptions d'E/S
+    except (IOError, OSError): 
         return None
 
-# --- Fonctions d'Analyse ---
-
 def get_files_and_patches(config):
-    """
-    Récupère la liste de tous les fichiers modifiés, filtre selon la config, 
-    et génère le patch (avec fallback vers l'analyse complète).
-    """
+    """Récupère la liste de tous les fichiers modifiés et génère le patch."""
     files_to_process = []
     
     try:
-        command = ["git", "diff", "--name-only", "origin/main...HEAD"]
-        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        # Tente de comparer avec la branche distante/précédente
+        command = ["git", "diff", "--name-only", "HEAD"]
+        result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=10)
         files = result.stdout.strip().split('\n')
-    except subprocess.CalledProcessError:
-        try:
-            command = ["git", "diff", "--name-only", "HEAD^", "HEAD"]
-            result = subprocess.run(command, capture_output=True, text=True, check=True)
-            files = result.stdout.strip().split('\n')
-        except Exception:
-            return []
+    except Exception:
+        return []
 
     for file_path in files:
-        if not file_path: continue
-        
+        if not file_path or not os.path.exists(file_path): continue
         analyzable_exts = config['analyzer']['analyzable_extensions']
-        max_size_kb = config['analyzer']['max_file_size_kb']
-
         if not any(file_path.lower().endswith(ext) for ext in analyzable_exts): continue
             
         try:
-            file_size_kb = os.path.getsize(file_path) / 1024
-            if file_size_kb > max_size_kb:
-                print(f"{COLOR_BLUE}INFO:{COLOR_END} Fichier ignoré (taille > {max_size_kb}KB): {file_path}", file=sys.stderr)
-                continue
-        except FileNotFoundError: continue
-
-        # Analyse Différentielle : Tentative de patch puis Fallback
-        try:
             patch_command = ["git", "diff", "--unified=0", "HEAD^", "--", file_path]
-            patch_result = subprocess.run(patch_command, capture_output=True, text=True, check=True, errors='ignore')
+            patch_result = subprocess.run(patch_command, capture_output=True, text=True, check=True, errors='ignore', timeout=10)
             patch_content = patch_result.stdout.strip()
             
-            if patch_content:
+            if not patch_content:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    patch_content = f.read()
+            
+            if patch_content.strip():
                 files_to_process.append({ 'path': file_path, 'patch': patch_content })
-            else:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    full_content = f.read()
-                
-                if full_content.strip():
-                    files_to_process.append({ 
-                        'path': file_path, 
-                        'patch': full_content 
-                    })
-                    print(f"{COLOR_YELLOW}WARN:{COLOR_END} Pas de patch détecté pour {file_path}. Analyse complète du fichier.", file=sys.stderr)
-
-        except subprocess.CalledProcessError:
-            try:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    full_content = f.read()
-                
-                if full_content.strip():
-                    files_to_process.append({
-                        'path': file_path,
-                        'patch': full_content 
-                    })
-                    print(f"{COLOR_YELLOW}WARN:{COLOR_END} Impossible de générer le patch pour {file_path}. Analyse du fichier entier.", file=sys.stderr)
-            except Exception:
-                continue 
+        except Exception:
+            continue
 
     return files_to_process
 
-
-def analyze_code_with_gemini(file_info, config, context, cache):
+def analyze_code_with_gemini(file_info, config, context, cache, full_rules):
     """Analyse le patch avec Gemini, en utilisant le cache si possible."""
     
-    # FIX CRITIQUE: Extraction du chemin du fichier depuis file_info
     file_path = file_info['path'] 
-    
     patch_content = file_info['patch']
     current_hash = get_file_hash(file_path)
     
-    # 1. VÉRIFICATION DU CACHE ♻️
+    # 1. VÉRIFICATION DU CACHE
     if current_hash and file_path in cache and cache[file_path]['sha256'] == current_hash and cache[file_path]['status'] == 'CODE_VALIDÉ':
         return "CODE_VALIDÉ", True 
 
-    # 2. AUCUN CACHE ou CACHE INVALIDE: Procède à l'analyse Gemini
+    # 2. AUCUN CACHE: Procède à l'analyse Gemini
     
-    rules_override = config.get('rules_override', "Aucune règle spécifique n'a été fournie.")
-
     prompt = (
         "En tant qu'expert en revue de code pour le projet ayant le contexte suivant: (" + context + "). "
-        # ... (reste du prompt inchangé) ...
         "Analyse les MODIFICATIONS (patch) fournies pour le fichier '" + file_path + "'. "
         
-        "**Règles du Projet :** " + rules_override + " "
+        "**Règles du Projet :** " + full_rules + " "
         
         "**Ton analyse doit obligatoirement classer chaque problème en deux niveaux :** "
         "1. **[CRITICAL_ERROR]** : Erreur de syntaxe, faille de sécurité, bug fonctionnel évident, ou non-conformité à une règle critique. (DOIT bloquer le push) "
@@ -251,7 +220,7 @@ def analyze_code_with_gemini(file_info, config, context, cache):
     
     # Appel à l'API
     try:
-        client = genai.Client()
+        client = genai.Client() 
         response = client.models.generate_content(
             model=config['analyzer']['model_name'],
             contents=prompt
@@ -273,13 +242,14 @@ def analyze_code_with_gemini(file_info, config, context, cache):
         return f"{COLOR_RED}Erreur inattendue:{COLOR_END} {e}", False
 
 
+# MODIFIÉ : Ajout de la génération de texte motivant par Gemini
 def send_push_rejection_email(recipient_email, reason_summary, detailed_report, user_prefs, user_name):
     """
-    Envoie un e-mail au développeur avec le rapport de l'analyse, formaté en HTML.
-    Utilité : Notifie le développeur avec un mail personnalisé et stylisé pour maximiser l'impact.
+    Envoie un e-mail au développeur avec le rapport de l'analyse, formaté en HTML stylisé.
+    Le message est personnalisé selon l'intérêt de l'utilisateur (sans le mentionner).
     """
     
-    # 1. Récupération des détails SMTP depuis l'environnement
+    # Récupération des détails SMTP (depuis l'environnement)
     smtp_server = os.getenv("SMTP_SERVER")
     smtp_port = os.getenv("SMTP_PORT", 587)
     smtp_user = os.getenv("SMTP_USER")
@@ -290,40 +260,57 @@ def send_push_rejection_email(recipient_email, reason_summary, detailed_report, 
         print(f"{COLOR_YELLOW}WARN:{COLOR_END} Variables d'environnement SMTP manquantes. Email non envoyé.", file=sys.stderr)
         return
 
-    # 2. Personnalisation du message 
+    # Personnalisation du message 
     interest = user_prefs.get('interest', 'la qualité du code')
     
+    # --- 1. GÉNÉRATION DU MESSAGE MOTIVANT PAR GEMINI (NOUVEAU) ---
+    motivational_text = reason_summary
+    
+    try:
+        client = genai.Client()
+        
+        prompt_motivation = (
+            f"L'utilisateur a un intérêt personnel pour '{interest}'. "
+            f"Le problème de code détecté est résumé par : '{reason_summary}'. "
+            f"Rédige un court paragraphe (3-4 phrases maximum) pour une introduction d'e-mail. "
+            f"Ce texte doit utiliser une ANALOGIE tirée de son centre d'intérêt pour motiver l'utilisateur à corriger le code et à réussir. "
+            f"Crucial : Ne mentionne JAMAIS explicitement le mot '{interest}' ou l'intérêt lui-même dans le texte généré. Rends le ton encourageant et professionnel."
+        )
+        
+        response_motivation = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt_motivation
+        )
+        motivational_text = response_motivation.text.strip()
+        
+    except Exception as e:
+        print(f"[{COLOR_YELLOW}WARN:{COLOR_END}] Échec de la génération du texte motivant par Gemini: {e}. Utilisation du résumé standard.")
+        motivational_text = f"Votre push a été annulé car l'analyse de code Gemini a détecté des problèmes critiques ou non conformes. {reason_summary}"
+
+
+    # --- 2. ADAPTATION DU SALUT ET SUJET (SUPPRESSION DE L'INTÉRÊT EXPLICITE) ---
     if user_name:
-        # Salutation personnalisée avec le nom de l'utilisateur
-        greeting_text = f"Salut {user_name}, Maître du Code, fan de {interest} !"
+        greeting_text = f"Salut {user_name}, Maître du Code !"
     else:
-        # Repli si le nom n'est pas trouvé
-        greeting_text = f"Salut Maître du Code, fan de {interest} !" 
+        greeting_text = f"Salut Maître du Code !" 
     
-    subject = f"🚨 PUSH BLOQUÉ : Revue de Code Critique par Gemini ({interest})"
+    subject = f"🚨 PUSH BLOQUÉ : Revue de Code Critique par Gemini"
     
-    # 3. Préparation du contenu du rapport pour le HTML
-    
-    # Utilité : Convertir les retours à la ligne en balises <br> pour l'affichage HTML
+    # Préparation du contenu du rapport pour le HTML
     html_detailed_report = detailed_report.replace('\n', '<br>')
     
-    # Utilité : Styliser les tags CRITICAL_ERROR en rouge
+    # Styliser les tags
     html_detailed_report = re.sub(r'\[CRITICAL_ERROR\]', 
                                  '<span style="color: #FF6666; font-weight: bold;">[CRITICAL_ERROR]</span>', 
                                  html_detailed_report)
-    
-    # Utilité : Styliser les tags WARNING en jaune
     html_detailed_report = re.sub(r'\[WARNING\]', 
                                  '<span style="color: #FFFF66; font-weight: bold;">[WARNING]</span>', 
                                  html_detailed_report)
-
-    # Utilité : Styliser les blocs de code (simplement en utilisant la balise <code> et en l'entourant d'un bloc)
-    # Remplacer les lignes '--- Fichier...' par un titre stylé
     html_detailed_report = re.sub(r'--- Fichier: (.*) ---', 
                                  '<br><span style="color: #66CCFF; font-weight: bold; background: #333; padding: 2px 5px; display: inline-block;">Fichier: \\1</span><br>', 
                                  html_detailed_report)
 
-    # 4. Construction du corps HTML stylé (Utilité : Design "stylé code")
+    # Construction du corps HTML stylé
     html_body = f"""
 <!DOCTYPE html>
 <html>
@@ -332,7 +319,6 @@ def send_push_rejection_email(recipient_email, reason_summary, detailed_report, 
         body {{ font-family: 'Courier New', Courier, monospace; background-color: #282c34; color: #abb2bf; padding: 20px; }}
         .container {{ max-width: 800px; margin: 0 auto; background-color: #1e2127; border: 1px solid #61afef; padding: 20px; box-shadow: 0 0 10px rgba(97, 175, 239, 0.5); }}
         h1 {{ color: #e5c07b; border-bottom: 2px solid #56b6c2; padding-bottom: 5px; }}
-        .error-summary {{ color: #ff6666; font-weight: bold; margin-bottom: 15px; border-left: 3px solid #ff6666; padding-left: 10px; }}
         .report {{ white-space: pre-wrap; word-break: break-word; line-height: 1.5; }}
         .footer {{ margin-top: 20px; padding-top: 10px; border-top: 1px solid #5c6370; color: #5c6370; font-size: 0.8em; }}
     </style>
@@ -342,21 +328,23 @@ def send_push_rejection_email(recipient_email, reason_summary, detailed_report, 
         <span style="color: #98c379; font-size: 1.2em;">&gt;&gt;&gt; Initializing Code Review Protocol...</span>
         <h1>{greeting_text}</h1>
 
-        <p class="error-summary">Votre push a été annulé car l'analyse de code Gemini a détecté des problèmes critiques ou non conformes.</p>
+        <span style="color: #ff6666; font-weight: bold; margin-bottom: 15px; border-left: 3px solid #ff6666; padding-left: 10px; display: block;">
+            🛑 PUSH ANNULÉ : Problèmes critiques détectés.
+        </span>
 
-        <span style="color: #61afef; font-weight: bold;">--- [ 🛑 RÉSUMÉ ] ---</span>
+        <span style="color: #61afef; font-weight: bold;">--- [ 💡 MOTIVATION & CONSEIL ] ---</span>
         <div style="margin-top: 10px; margin-bottom: 20px; padding: 10px; background-color: #2c313a; border: 1px dashed #e06c75;">
-            <p>{reason_summary}</p>
+            <p>{motivational_text}</p>
         </div>
 
-        <span style="color: #e5c07b; font-weight: bold;">--- [ 🛠️ DÉTAILS ET SUGGESTIONS DE CORRECTION ] ---</span>
+        <span style="color: #e5c07b; font-weight: bold;">--- [ 🛠️ DÉTAILS DU RAPPORT ] ---</span>
         <div class="report" style="margin-top: 10px; padding: 15px; background-color: #0d0e11; border: 1px solid #5c6370;">
             {html_detailed_report}
         </div>
 
         <div class="footer">
             <span style="color: #98c379;">&lt;-- Process finished with exit code 1.</span><br>
-            {interest.capitalize()} est crucial pour ce projet. Veuillez corriger ces problèmes et commiter/pusher à nouveau.<br>
+            Veuillez corriger ces problèmes et commiter/pusher à nouveau.<br>
             Merci,<br>
             L'équipe d'Analyse Gemini.
         </div>
@@ -365,9 +353,9 @@ def send_push_rejection_email(recipient_email, reason_summary, detailed_report, 
 </html>
     """
 
-    # 5. Envoi du mail
+    # Envoi du mail
     try:
-        msg = MIMEText(html_body, 'html') # IMPORTANT: Spécifier le format HTML
+        msg = MIMEText(html_body, 'html')
         msg['Subject'] = subject
         msg['From'] = sender_email
         msg['To'] = recipient_email
@@ -383,60 +371,81 @@ def send_push_rejection_email(recipient_email, reason_summary, detailed_report, 
 
 
 # --------------------------------------------------------------------------------
-# MAIN
+# MAIN (Logique de chargement inchangée)
 # --------------------------------------------------------------------------------
 
 def main():
     
-    load_dotenv()
-    config = load_config()
-    context = get_project_context()
-    
-    user_prefs = load_user_prefs() 
-    
-    # NOUVEAU: Récupération du nom de l'utilisateur
-    user_name = None
-    try:
-        git_name_command = ["git", "config", "user.name"]
-        user_name = subprocess.run(git_name_command, capture_output=True, text=True, check=False).stdout.strip()
-        if not user_name: user_name = None
-    except Exception:
-        user_name = None
-        
-    # NOUVEAU: Récupération de l'e-mail avec logique de repli
-    # Utilité : Garantir qu'un e-mail est trouvé, même si la config Git est manquante.
+    # 1. LOGIQUE DE CHARGEMENT : CI/CD (GitHub Action) ou Local
+    is_ci_cd = os.getenv('CI') == 'true'
+
     user_email = None
-    try:
-        # 1. Tente de récupérer l'e-mail via Git (Source principale)
-        git_email_command = ["git", "config", "user.email"]
-        git_email = subprocess.run(git_email_command, capture_output=True, text=True, check=False).stdout.strip()
-        if git_email:
-             user_email = git_email
-    except Exception:
-        pass # Ignorer l'erreur et passer au repli
+    user_name = None
+    user_prefs = {}
 
-    # 2. Repli: Utilise l'e-mail du fichier de préférences si l'e-mail Git n'est pas trouvé
-    if not user_email:
-         user_email = user_prefs.get('email', None)
+    if is_ci_cd:
+        # Mode CI/CD (GitHub Actions)
+        user_email = os.getenv("PUSHER_EMAIL") 
+        user_name = os.getenv("PUSHER_NAME")   
+        # En CI, l'intérêt est une variable d'environnement (ex: 'randonnée', 'jeux vidéo')
+        user_prefs = {'interest': os.getenv("PREF_INTEREST", 'la qualité du code')} 
+        
+        if not os.getenv("GEMINI_API_KEY"):
+            print(f"\n{COLOR_RED}🛑 ERREUR CRITIQUE:{COLOR_END} La variable d'environnement GEMINI_API_KEY n'est pas définie dans la GitHub Action.", file=sys.stderr)
+            sys.exit(1)
+        
+    else:
+        # Mode Local (pre-push hook)
+        load_dotenv() # Lit le fichier .env
+        user_prefs = load_user_prefs() # Lit le .user_email_prefs.json 
 
-    # Vérification de l'API Key (inchangé)
-    if not os.getenv("GEMINI_API_KEY"):
-        print(f"\n{COLOR_RED}🛑 ERREUR CRITIQUE:{COLOR_END} La variable d'environnement GEMINI_API_KEY n'est pas définie.", file=sys.stderr)
-        print(f"Veuillez la définir (par exemple, dans un fichier .env à la racine du projet).", file=sys.stderr)
-        sys.exit(1)
+        # Récupération du nom de l'utilisateur (Git)
+        try:
+            git_name_command = ["git", "config", "user.name"]
+            user_name = subprocess.run(git_name_command, capture_output=True, text=True, check=False).stdout.strip()
+            if not user_name: user_name = None
+        except Exception:
+            user_name = None
+            
+        # Récupération de l'e-mail avec logique de repli
+        try:
+            git_email_command = ["git", "config", "user.email"]
+            git_email = subprocess.run(git_email_command, capture_output=True, text=True, check=False).stdout.strip()
+            if git_email:
+                 user_email = git_email
+        except Exception:
+            pass 
 
-    print(f"{COLOR_BLUE}--- 🚀 Démarrage de l'analyse de code par Gemini (pre-push) ---{COLOR_END}")
-    print(f"{COLOR_BLUE}Contexte du Projet: {COLOR_END}{context}")
+        if not user_email:
+             user_email = user_prefs.get('email', None)
+
+        if not os.getenv("GEMINI_API_KEY"):
+            print(f"\n{COLOR_RED}🛑 ERREUR CRITIQUE:{COLOR_END} La variable d'environnement GEMINI_API_KEY n'est pas définie dans votre .env.", file=sys.stderr)
+            sys.exit(1)
+
+    # 2. Initialisation, Détection de Langage et Analyse
+    config = load_config()
+    
+    language, context = detect_project_language()
+    
+    dynamic_rules = LANGUAGE_RULES.get(language, LANGUAGE_RULES['General'])
+    project_rules_override = config.get('rules_override', "Aucun override spécifié.")
+    
+    full_rules = f"Règles Spécifiques ({language}): {dynamic_rules}. Règle du Fichier Config: {project_rules_override}"
+    
+
+    print(f"{COLOR_BLUE}--- 🚀 Démarrage de l'analyse de code par Gemini ({'CI/CD' if is_ci_cd else 'pre-push'}) ---{COLOR_END}")
+    print(f"{COLOR_BLUE}Contexte du Projet ({language}): {COLOR_END}{context}")
     
     cache = load_cache() 
     files_to_analyze = get_files_and_patches(config)
     
     if not files_to_analyze:
-        print(f"\n{COLOR_YELLOW}--- INFO HOOK : Aucun fichier pertinent trouvé. Poursuite du push. ---{COLOR_END}")
+        print(f"\n{COLOR_YELLOW}--- INFO HOOK : Aucun fichier pertinent trouvé. Poursuite. ---{COLOR_END}")
         sys.exit(0)
     
     has_critical_error = False
-    full_report = "" # Pour stocker l'intégralité du rapport d'erreurs (pour l'e-mail)
+    full_report = "" 
     
     print(f"{COLOR_BLUE}Fichiers à analyser ({len(files_to_analyze)}) : {COLOR_END}{', '.join([f['path'] for f in files_to_analyze])}")
 
@@ -450,40 +459,33 @@ def main():
     
     # Boucle d'analyse
     for file_info in progress_bar:
-        # FIX CRITIQUE: Extraction du chemin du fichier depuis file_info
         file_path = file_info['path'] 
-        
         progress_bar.set_description(f"Analyse de {file_path.split('/')[-1]}")
-        result, is_cached = analyze_code_with_gemini(file_info, config, context, cache) 
+        
+        result, is_cached = analyze_code_with_gemini(file_info, config, context, cache, full_rules) 
         
         progress_bar.clear()
         
-        # Logique de gestion du cache
+        # Logique de gestion du cache et de l'affichage console
         if is_cached:
-            print(f"[{COLOR_BLUE}♻️ CACHE{COLOR_END}] {file_path} : Validation réutilisée (Hash inchangé).")
-        # Logique de classification si l'analyse a été effectuée
+            print(f"[{COLOR_BLUE}♻️ CACHE{COLOR_END}] {file_path} : Validation réutilisée.")
         elif "CODE_VALIDÉ" in result:
             print(f"[{COLOR_GREEN}✅{COLOR_END}] {file_path} : Code validé par Gemini.")
         else:
-            # Enregistrement du rapport et mise à jour de l'état
-            full_report += f"\n--- Fichier: {file_path} ---\n{result}\n" # Ajout au rapport
+            full_report += f"\n--- Fichier: {file_path} ---\n{result}\n" 
 
-            # Recherche des erreurs critiques
             if "[CRITICAL_ERROR]" in result:
                 print(f"[{COLOR_RED}🛑{COLOR_END}] {file_path} : {COLOR_RED}ERREURS CRITIQUES DÉTECTÉES !{COLOR_END}")
                 has_critical_error = True
             elif "[WARNING]" in result:
-                print(f"[{COLOR_YELLOW}⚠️{COLOR_END}] {file_path} : {COLOR_YELLOW}Avertissements de style/optimisation !{COLOR_END}")
+                print(f"[{COLOR_YELLOW}⚠️{COLOR_END}] {file_path} : {COLOR_YELLOW}Avertissements !{COLOR_END}")
             else:
-                 # Logique de gestion de l'output non tagué (Correction de sécurité via la configuration)
                 is_strict = config['analyzer'].get('strict_untagged_output', False)
-
                 if is_strict:
-                    print(f"[{COLOR_RED}❌{COLOR_END}] {file_path} : {COLOR_RED}PROBLÈME DÉTECTÉ (Output IA non classifié - Mode strict) !{COLOR_END}")
-                    print(f"{COLOR_RED}Le format de réponse de l'IA n'était pas respecté. Push bloqué par sécurité.{COLOR_END}")
-                    has_critical_error = True # BLOQUE le push
+                    print(f"[{COLOR_RED}❌{COLOR_END}] {file_path} : {COLOR_RED}PROBLÈME DÉTECTÉ (Output non classifié - Mode strict) !{COLOR_END}")
+                    has_critical_error = True 
                 else:
-                    print(f"[{COLOR_YELLOW}⚠️{COLOR_END}] {file_path} : {COLOR_YELLOW}Avertissements (non classifiés, mode non strict) !{COLOR_END}")
+                    print(f"[{COLOR_YELLOW}⚠️{COLOR_END}] {file_path} : {COLOR_YELLOW}Avertissements (non classifiés) !{COLOR_END}")
 
             print("-" * 50)
             print(result)
@@ -495,20 +497,19 @@ def main():
     
     save_cache(cache)
 
-    # Décision finale du push : Bloque uniquement si CRITICAL_ERROR est trouvé
+    # 3. Décision finale et Envoi d'E-mail
     if has_critical_error:
-        print(f"\n{COLOR_RED}!!! 🛑 PUSH ANNULÉ : Des ERREURS CRITIQUES ont été détectées. !!!{COLOR_END}")
+        reason_summary = "Des erreurs critiques ([CRITICAL_ERROR]) ont été trouvées, bloquant l'opération. Consultez les détails ci-dessous pour les corrections."
+        print(f"\n{COLOR_RED}!!! 🛑 PUSH/COMMIT ANNULÉ : Des ERREURS CRITIQUES ont été détectées. !!!{COLOR_END}")
         
-        # NOUVEAU: Envoi de l'e-mail en cas de blocage avec gestion du nom et du repli
         if user_email:
-            summary = "Des erreurs critiques ([CRITICAL_ERROR]) ont été trouvées, bloquant le push. Consultez les détails ci-dessous pour les corrections."
-            send_push_rejection_email(user_email, summary, full_report, user_prefs, user_name)
+            send_push_rejection_email(user_email, reason_summary, full_report, user_prefs, user_name)
         else:
-            print(f"{COLOR_RED}ERREUR EMAIL:{COLOR_END} Impossible de déterminer l'adresse e-mail du destinataire. E-mail non envoyé.", file=sys.stderr)
+            print(f"{COLOR_RED}ERREUR EMAIL:{COLOR_END} Impossible de déterminer l'adresse e-mail du destinataire.", file=sys.stderr)
             
         sys.exit(1) 
     else:
-        print(f"\n{COLOR_GREEN}--- ✅ Analyse terminée. Code propre (ou seulement des avertissements). Poursuite du push. ---{COLOR_END}")
+        print(f"\n{COLOR_GREEN}--- ✅ Analyse terminée. Code propre (ou seulement des avertissements). Poursuite. ---{COLOR_END}")
         sys.exit(0)
 
 if __name__ == "__main__":
