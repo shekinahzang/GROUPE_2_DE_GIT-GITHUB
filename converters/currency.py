@@ -1,15 +1,16 @@
-# converters/currency.py
+def convertir_devise(montant, de, vers):
+    taux = {
+        "EUR": 1.00,
+        "USD": 1.08,   # 1 EUR = 1.08 USD
+        "XAF": 655.96, # 1 EUR = 655.96 FCFA
+        "GBP": 0.86,   # 1 EUR = 0.86 GBP
+        "CAD": 1.47,   # 1 EUR = 1.47 CAD
+        "JPY": 162.50  # 1 EUR = 162.50 JPY
+    }
 
-import requests
-from typing import Optional
+    if de not in taux or vers not in taux:
+        raise ValueError("Devise non supportée")
 
-def convertir_devise(montant: float, de: str, vers: str) -> Optional[float]:
-    url: str = f"https://api.exchangerate.host/convert?from={de}&to={vers}&amount={montant}"
-    try:
-        reponse: requests.Response = requests.get(url)
-        data: dict = reponse.json()
-        taux: Optional[float] = data.get("result")
-        return taux
-    except Exception as e:
-        print(f"Erreur lors de la conversion de devise : {e}")
-        return None
+    # Convertir en EUR puis vers la devise cible
+    montant_eur = montant / taux[de]
+    return montant_eur * taux[vers]
