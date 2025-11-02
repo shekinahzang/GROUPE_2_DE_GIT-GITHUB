@@ -1,12 +1,16 @@
 # gemini_code_analyzer.py
 
-import os # FIX CRITIQUE: Ajout de l'import os
+import os
 import sys
 import subprocess
 import json
 import yaml 
 import copy 
 import hashlib 
+import smtplib # Utilité : Envoi de mail
+import re # Utilité : Traitement de texte pour le format HTML du mail
+
+from email.mime.text import MIMEText # Utilité : Construction de messages MIME (HTML)
 from google import genai
 from google.genai.errors import APIError
 from dotenv import load_dotenv
@@ -22,6 +26,7 @@ COLOR_END = '\033[0m'
 # --- Configuration par défaut et globale ---
 CONFIG_FILE = '.geminianalyzer.yml'
 CACHE_FILE = '.gemini_cache.json' # Fichier de cache local
+EMAIL_PREFS_FILE = '.user_email_prefs.json' # Fichier de préférences pour l'e-mail (inclut le repli)
 
 # --- Fonctions de Configuration et d'Utilité ---
 
@@ -69,6 +74,17 @@ def load_config():
     except Exception as e:
         print(f"{COLOR_RED}ERREUR CONFIG:{COLOR_END} Erreur inattendue lors du chargement de la configuration: {e}. Utilisation des paramètres par défaut.", file=sys.stderr)
         return default_config
+
+def load_user_prefs():
+    """Charge les préférences utilisateur (email de repli et intérêt pour la personnalisation)."""
+    if os.path.exists(EMAIL_PREFS_FILE):
+        try:
+            with open(EMAIL_PREFS_FILE, 'r') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            print(f"{COLOR_YELLOW}WARN:{COLOR_END} Impossible de lire les préférences utilisateur. Utilisation par défaut.", file=sys.stderr)
+            return {}
+    return {}
 
 def get_project_context():
     """Détecte les frameworks principaux pour fournir du contexte à Gemini."""
@@ -256,6 +272,116 @@ def analyze_code_with_gemini(file_info, config, context, cache):
     except Exception as e:
         return f"{COLOR_RED}Erreur inattendue:{COLOR_END} {e}", False
 
+
+def send_push_rejection_email(recipient_email, reason_summary, detailed_report, user_prefs, user_name):
+    """
+    Envoie un e-mail au développeur avec le rapport de l'analyse, formaté en HTML.
+    Utilité : Notifie le développeur avec un mail personnalisé et stylisé pour maximiser l'impact.
+    """
+    
+    # 1. Récupération des détails SMTP depuis l'environnement
+    smtp_server = os.getenv("SMTP_SERVER")
+    smtp_port = os.getenv("SMTP_PORT", 587)
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    sender_email = os.getenv("SENDER_EMAIL", "gemini-analyzer@noreply.com")
+
+    if not all([smtp_server, smtp_user, smtp_password]):
+        print(f"{COLOR_YELLOW}WARN:{COLOR_END} Variables d'environnement SMTP manquantes. Email non envoyé.", file=sys.stderr)
+        return
+
+    # 2. Personnalisation du message 
+    interest = user_prefs.get('interest', 'la qualité du code')
+    
+    if user_name:
+        # Salutation personnalisée avec le nom de l'utilisateur
+        greeting_text = f"Salut {user_name}, Maître du Code, fan de {interest} !"
+    else:
+        # Repli si le nom n'est pas trouvé
+        greeting_text = f"Salut Maître du Code, fan de {interest} !" 
+    
+    subject = f"🚨 PUSH BLOQUÉ : Revue de Code Critique par Gemini ({interest})"
+    
+    # 3. Préparation du contenu du rapport pour le HTML
+    
+    # Utilité : Convertir les retours à la ligne en balises <br> pour l'affichage HTML
+    html_detailed_report = detailed_report.replace('\n', '<br>')
+    
+    # Utilité : Styliser les tags CRITICAL_ERROR en rouge
+    html_detailed_report = re.sub(r'\[CRITICAL_ERROR\]', 
+                                 '<span style="color: #FF6666; font-weight: bold;">[CRITICAL_ERROR]</span>', 
+                                 html_detailed_report)
+    
+    # Utilité : Styliser les tags WARNING en jaune
+    html_detailed_report = re.sub(r'\[WARNING\]', 
+                                 '<span style="color: #FFFF66; font-weight: bold;">[WARNING]</span>', 
+                                 html_detailed_report)
+
+    # Utilité : Styliser les blocs de code (simplement en utilisant la balise <code> et en l'entourant d'un bloc)
+    # Remplacer les lignes '--- Fichier...' par un titre stylé
+    html_detailed_report = re.sub(r'--- Fichier: (.*) ---', 
+                                 '<br><span style="color: #66CCFF; font-weight: bold; background: #333; padding: 2px 5px; display: inline-block;">Fichier: \\1</span><br>', 
+                                 html_detailed_report)
+
+    # 4. Construction du corps HTML stylé (Utilité : Design "stylé code")
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: 'Courier New', Courier, monospace; background-color: #282c34; color: #abb2bf; padding: 20px; }}
+        .container {{ max-width: 800px; margin: 0 auto; background-color: #1e2127; border: 1px solid #61afef; padding: 20px; box-shadow: 0 0 10px rgba(97, 175, 239, 0.5); }}
+        h1 {{ color: #e5c07b; border-bottom: 2px solid #56b6c2; padding-bottom: 5px; }}
+        .error-summary {{ color: #ff6666; font-weight: bold; margin-bottom: 15px; border-left: 3px solid #ff6666; padding-left: 10px; }}
+        .report {{ white-space: pre-wrap; word-break: break-word; line-height: 1.5; }}
+        .footer {{ margin-top: 20px; padding-top: 10px; border-top: 1px solid #5c6370; color: #5c6370; font-size: 0.8em; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <span style="color: #98c379; font-size: 1.2em;">&gt;&gt;&gt; Initializing Code Review Protocol...</span>
+        <h1>{greeting_text}</h1>
+
+        <p class="error-summary">Votre push a été annulé car l'analyse de code Gemini a détecté des problèmes critiques ou non conformes.</p>
+
+        <span style="color: #61afef; font-weight: bold;">--- [ 🛑 RÉSUMÉ ] ---</span>
+        <div style="margin-top: 10px; margin-bottom: 20px; padding: 10px; background-color: #2c313a; border: 1px dashed #e06c75;">
+            <p>{reason_summary}</p>
+        </div>
+
+        <span style="color: #e5c07b; font-weight: bold;">--- [ 🛠️ DÉTAILS ET SUGGESTIONS DE CORRECTION ] ---</span>
+        <div class="report" style="margin-top: 10px; padding: 15px; background-color: #0d0e11; border: 1px solid #5c6370;">
+            {html_detailed_report}
+        </div>
+
+        <div class="footer">
+            <span style="color: #98c379;">&lt;-- Process finished with exit code 1.</span><br>
+            {interest.capitalize()} est crucial pour ce projet. Veuillez corriger ces problèmes et commiter/pusher à nouveau.<br>
+            Merci,<br>
+            L'équipe d'Analyse Gemini.
+        </div>
+    </div>
+</body>
+</html>
+    """
+
+    # 5. Envoi du mail
+    try:
+        msg = MIMEText(html_body, 'html') # IMPORTANT: Spécifier le format HTML
+        msg['Subject'] = subject
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        
+        with smtplib.SMTP(smtp_server, int(smtp_port)) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.sendmail(sender_email, [recipient_email], msg.as_string())
+        
+        print(f"[{COLOR_GREEN}✉️ EMAIL{COLOR_END}] Rapport de blocage envoyé à {recipient_email}.")
+    except Exception as e:
+        print(f"{COLOR_RED}ERREUR EMAIL:{COLOR_END} Impossible d'envoyer l'e-mail à {recipient_email}: {e}", file=sys.stderr)
+
+
 # --------------------------------------------------------------------------------
 # MAIN
 # --------------------------------------------------------------------------------
@@ -266,8 +392,34 @@ def main():
     config = load_config()
     context = get_project_context()
     
-    cache = load_cache() 
+    user_prefs = load_user_prefs() 
     
+    # NOUVEAU: Récupération du nom de l'utilisateur
+    user_name = None
+    try:
+        git_name_command = ["git", "config", "user.name"]
+        user_name = subprocess.run(git_name_command, capture_output=True, text=True, check=False).stdout.strip()
+        if not user_name: user_name = None
+    except Exception:
+        user_name = None
+        
+    # NOUVEAU: Récupération de l'e-mail avec logique de repli
+    # Utilité : Garantir qu'un e-mail est trouvé, même si la config Git est manquante.
+    user_email = None
+    try:
+        # 1. Tente de récupérer l'e-mail via Git (Source principale)
+        git_email_command = ["git", "config", "user.email"]
+        git_email = subprocess.run(git_email_command, capture_output=True, text=True, check=False).stdout.strip()
+        if git_email:
+             user_email = git_email
+    except Exception:
+        pass # Ignorer l'erreur et passer au repli
+
+    # 2. Repli: Utilise l'e-mail du fichier de préférences si l'e-mail Git n'est pas trouvé
+    if not user_email:
+         user_email = user_prefs.get('email', None)
+
+    # Vérification de l'API Key (inchangé)
     if not os.getenv("GEMINI_API_KEY"):
         print(f"\n{COLOR_RED}🛑 ERREUR CRITIQUE:{COLOR_END} La variable d'environnement GEMINI_API_KEY n'est pas définie.", file=sys.stderr)
         print(f"Veuillez la définir (par exemple, dans un fichier .env à la racine du projet).", file=sys.stderr)
@@ -276,6 +428,7 @@ def main():
     print(f"{COLOR_BLUE}--- 🚀 Démarrage de l'analyse de code par Gemini (pre-push) ---{COLOR_END}")
     print(f"{COLOR_BLUE}Contexte du Projet: {COLOR_END}{context}")
     
+    cache = load_cache() 
     files_to_analyze = get_files_and_patches(config)
     
     if not files_to_analyze:
@@ -283,6 +436,7 @@ def main():
         sys.exit(0)
     
     has_critical_error = False
+    full_report = "" # Pour stocker l'intégralité du rapport d'erreurs (pour l'e-mail)
     
     print(f"{COLOR_BLUE}Fichiers à analyser ({len(files_to_analyze)}) : {COLOR_END}{', '.join([f['path'] for f in files_to_analyze])}")
 
@@ -311,6 +465,9 @@ def main():
         elif "CODE_VALIDÉ" in result:
             print(f"[{COLOR_GREEN}✅{COLOR_END}] {file_path} : Code validé par Gemini.")
         else:
+            # Enregistrement du rapport et mise à jour de l'état
+            full_report += f"\n--- Fichier: {file_path} ---\n{result}\n" # Ajout au rapport
+
             # Recherche des erreurs critiques
             if "[CRITICAL_ERROR]" in result:
                 print(f"[{COLOR_RED}🛑{COLOR_END}] {file_path} : {COLOR_RED}ERREURS CRITIQUES DÉTECTÉES !{COLOR_END}")
@@ -341,6 +498,14 @@ def main():
     # Décision finale du push : Bloque uniquement si CRITICAL_ERROR est trouvé
     if has_critical_error:
         print(f"\n{COLOR_RED}!!! 🛑 PUSH ANNULÉ : Des ERREURS CRITIQUES ont été détectées. !!!{COLOR_END}")
+        
+        # NOUVEAU: Envoi de l'e-mail en cas de blocage avec gestion du nom et du repli
+        if user_email:
+            summary = "Des erreurs critiques ([CRITICAL_ERROR]) ont été trouvées, bloquant le push. Consultez les détails ci-dessous pour les corrections."
+            send_push_rejection_email(user_email, summary, full_report, user_prefs, user_name)
+        else:
+            print(f"{COLOR_RED}ERREUR EMAIL:{COLOR_END} Impossible de déterminer l'adresse e-mail du destinataire. E-mail non envoyé.", file=sys.stderr)
+            
         sys.exit(1) 
     else:
         print(f"\n{COLOR_GREEN}--- ✅ Analyse terminée. Code propre (ou seulement des avertissements). Poursuite du push. ---{COLOR_END}")
