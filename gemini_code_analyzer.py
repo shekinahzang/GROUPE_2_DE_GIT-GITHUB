@@ -169,29 +169,29 @@ def get_files_and_patches(config, refs_data=None):
         # Mode pre-push: Analyse de la plage de commits envoyée via STDIN
         
         lines = refs_data.split('\n')
-        # On cherche la dernière ligne significative pour extraire les SHAs
+        # On cherche la dernière ligne significative pour extraire les SHAs (format: <local ref> <local sha> <remote ref> <remote sha>)
         last_ref = [x for x in lines if x.strip()][-1].split() if lines else []
         
         if len(last_ref) >= 4:
-             # last_ref[1] = SHA du dernier commit connu sur la remote (old_ref)
-             # last_ref[3] = SHA du commit le plus récent à pousser (new_ref)
-             old_ref = last_ref[1] 
-             new_ref = last_ref[3] 
+             # old_sha_for_diff est le SHA du dernier commit connu sur la remote (index 1)
+             # new_sha_for_diff est le SHA du commit le plus récent à pousser (index 3)
+             old_sha_for_diff = last_ref[1]
+             new_sha_for_diff = last_ref[3]
              
-             # Si old_ref est 0000..., c'est une nouvelle branche. On compare les commits de la nouvelle branche.
-             if all(c == '0' for c in old_ref):
-                 commit_range = new_ref
+             # Utilité : Si old_sha_for_diff est 0000... (nouvelle branche), on analyse tous les commits de cette branche
+             if all(c == '0' for c in old_sha_for_diff):
+                 commit_range = new_sha_for_diff # Analyse tous les commits de la nouvelle branche
              else:
                  # Standard push: compare entre old remote HEAD et new local HEAD
-                 commit_range = f"{old_ref}..{new_ref}"
+                 commit_range = f"{old_sha_for_diff}..{new_sha_for_diff}"
         else:
-            print(f"{COLOR_YELLOW}WARN:{COLOR_END} Format de références pre-push inattendu. Utilisation de HEAD~1..HEAD.", file=sys.stderr)
-            commit_range = "HEAD~1..HEAD"
+            print(f"{COLOR_YELLOW}WARN:{COLOR_END} Format de références pre-push inattendu. Utilisation de HEAD^...HEAD.", file=sys.stderr)
+            commit_range = "HEAD^...HEAD"
             
     else:
-        # Mode local ou fallback (sans hook): analyse du dernier commit ou de l'index
-        # Ceci est utilisé si le script est lancé sans être via le hook pre-push
-        commit_range = "HEAD^...HEAD"
+        # Mode local (sans hook) ou CI/CD sans références de push explicites
+        # Analyse du dernier commit ou de l'index
+        commit_range = "HEAD^...HEAD" # Analyser les changements du dernier commit
 
     # 2. COMMANDE GIT DIFF
     try:
@@ -279,7 +279,7 @@ def analyze_code_with_gemini(file_info, config, context, cache, full_rules):
         return f"{COLOR_RED}Erreur inattendue:{COLOR_END} {e}", False
 
 
-# --- Fonction d'Envoi d'E-mail (inchangée) ---
+# --- Fonction d'Envoi d'E-mail (avec correction de style) ---
 
 def send_push_rejection_email(recipient_email, reason_summary, detailed_report, user_prefs, user_name):
     """
@@ -371,7 +371,7 @@ def send_push_rejection_email(recipient_email, reason_summary, detailed_report, 
 
         <span style="color: #61afef; font-weight: bold;">--- [ 💡 MOTIVATION & CONSEIL ] ---</span>
         <div style="margin-top: 10px; margin-bottom: 20px; padding: 10px; background-color: #2c313a; border: 1px dashed #e06c75;">
-            <p>{motivational_text}</p>
+            <p style="color: white;">{motivational_text}</p>
         </div>
 
         <span style="color: #e5c07b; font-weight: bold;">--- [ 🛠️ DÉTAILS DU RAPPORT ] ---</span>
