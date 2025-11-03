@@ -20,17 +20,10 @@ jobs:
     runs-on: ubuntu-latest
     
     # 1. Définition des variables dynamiques (user info)
-    # Utilité : Ces variables injectent le nom et l'e-mail de l'utilisateur qui a déclenché l'événement 
-    # (via 'push' ou 'pull_request') dans l'environnement du job.
+    # Utilité : Ces variables injectent le nom et l'e-mail de l'utilisateur qui a déclenché l'événement.
     env:
-      # Récupère l'e-mail ou le login de l'utilisateur qui a initié l'action
       PUSHER_EMAIL: ${{ github.event.pusher.email || github.event.pull_request.user.email }}
       PUSHER_NAME: ${{ github.event.pusher.name || github.event.pull_request.user.login }}
-      
-      # NOTE: Si vous voulez que le centre d'intérêt (PREF_INTEREST) soit variable en CI/CD, 
-      # il doit être défini soit ici (en dur) soit comme un Secret d'Organisation/Dépôt.
-      # Sinon, il prendra la valeur par défaut 'la qualité du code'.
-      # Exemple ci-dessous utilisant un Secret d'environnement appelé CI_PREF_INTEREST (à définir)
       PREF_INTEREST: ${{ secrets.CI_PREF_INTEREST || 'la performance et la sécurité' }}
 
     steps:
@@ -46,30 +39,43 @@ jobs:
 
       - name: 📥 Installation des dépendances (Python)
         run: pip install -r requirements.txt
-        # Utilité : Installe les bibliothèques Python nécessaires (google-genai, python-dotenv, tqdm, etc.).
+        # Utilité : Installe les bibliothèques Python nécessaires (google-genai, python-dotenv, etc.).
 
-      - name: 📦 Installation des dépendances (Node/ESLint)
-        id: npm_install
-        # Utilité : Exécute npm install UNIQUEMENT si package.json existe.
+# --- DÉBUT DE LA NOUVELLE LOGIQUE CONDITIONNELLE (Correction de l'erreur CRITIQUE) ---
+
+      - name: 🔍 Vérifier la présence de package.json (pour Node/ESLint)
+        id: check_package_json
         run: |
           if [ -f package.json ]; then
-            npm install
+            # ::set-output est une commande spéciale qui stocke une variable pour les étapes suivantes.
+            echo "::set-output name=found_package_json::true"
+            echo "::notice file=package.json::Fichier package.json trouvé. Les étapes Node/ESLint seront exécutées."
           else
-            echo "::notice file=package.json::Fichier package.json non trouvé. Saut de l'installation Node/ESLint."
+            echo "::set-output name=found_package_json::false"
+            echo "::notice file=package.json::Fichier package.json non trouvé. Les étapes Node/ESLint seront sautées."
           fi
+        # Utilité : Cette étape permet de rendre les étapes JavaScript/Node.js/ESLint facultatives
+        # en vérifiant l'existence du fichier 'package.json'.
+
+      - name: 📦 Installation des dépendances (Node/ESLint)
+        if: steps.check_package_json.outputs.found_package_json == 'true'
+        run: npm install
+        # Utilité : L'attribut 'if:' assure que cette étape ne s'exécute QUE si 'found_package_json' est 'true'.
+        # Cela empêche 'npm install' d'échouer si le projet est purement Python ou autre.
 
       - name: 🔬 Exécution de l'Analyse Statique (ESLint)
-        # Utilité : Exécute ESLint UNIQUEMENT si l'installation précédente a réussi (i.e. package.json existait).
-        # Nous ajoutons une condition pour sauter l'étape si npm install n'a pas été fait.
-        if: success() && steps.npm_install.outcome != 'skipped'
+        if: steps.check_package_json.outputs.found_package_json == 'true'
         run: |
           ./node_modules/.bin/eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0
         continue-on-error: false
+        # Utilité : L'attribut 'if:' assure que ESLint ne s'exécute que si les dépendances ont été installées.
+        # L'option 'continue-on-error: false' force l'échec du job si ESLint trouve des erreurs non critiques.
+
+# --- FIN DE LA LOGIQUE CONDITIONNELLE ---
 
       - name: 🧠 Exécution de l'Analyse Critique par Gemini
         run: python gemini_code_analyzer.py
         env:
-          # Les variables 'PUSHER_EMAIL', 'PUSHER_NAME' et 'PREF_INTEREST' sont déjà injectées au niveau du Job.
           # SECRET CRITIQUE (Clé API)
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           # SECRETS SMTP (pour l'envoi d'e-mail)
@@ -78,5 +84,4 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
-        # Utilité : Lance le script d'analyse, qui applique la détection de langage, les règles dynamiques
-        # (typage Python, etc.) et envoie l'e-mail motivant en cas de blocage critique.
+        # Utilité : Lance le script d'analyse Python. Cette étape est indépendante des dépendances Node.js.
