@@ -312,7 +312,6 @@ def send_push_rejection_email(recipient_email, reason_summary, detailed_report, 
             f"Le problème de code détecté est résumé par : '{reason_summary}'. "
             f"Rédige un court paragraphe (3-4 phrases maximum) pour une introduction d'e-mail. "
             f"Ce texte doit utiliser une ANALOGIE tirée de son centre d'intérêt pour motiver l'utilisateur à corriger le code et à réussir. "
-            f"Crucial : Ne mentionne JAMAIS explicitement le mot '{interest}' ou l'intérêt lui-même dans le texte généré. Rends le ton encourageant et professionnel."
         )
         
         response_motivation = client.models.generate_content(
@@ -354,11 +353,11 @@ def send_push_rejection_email(recipient_email, reason_summary, detailed_report, 
 <html>
 <head>
     <style>
-        body {{ font-family: 'Courier New', Courier, monospace; background-color: #282c34; color: #abb2bf; padding: 20px; }}
+        body {{ font-family: 'Courier New', Courier, monospace; background-color: #282c34; color: white; padding: 20px; }}
         .container {{ max-width: 800px; margin: 0 auto; background-color: #1e2127; border: 1px solid #61afef; padding: 20px; box-shadow: 0 0 10px rgba(97, 175, 239, 0.5); }}
         h1 {{ color: #e5c07b; border-bottom: 2px solid #56b6c2; padding-bottom: 5px; }}
         .report {{ white-space: pre-wrap; word-break: break-word; line-height: 1.5; }}
-        .footer {{ margin-top: 20px; padding-top: 10px; border-top: 1px solid #5c6370; color: #5c6370; font-size: 0.8em; }}
+        .footer {{ margin-top: 20px; padding-top: 10px; border-top: 1px solid #5c6370; color: white; font-size: 0.8em; }}
     </style>
 </head>
 <body>
