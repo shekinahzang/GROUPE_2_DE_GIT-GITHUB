@@ -169,29 +169,29 @@ def get_files_and_patches(config, refs_data=None):
         # Mode pre-push: Analyse de la plage de commits envoyée via STDIN
         
         lines = refs_data.split('\n')
-        # On cherche la dernière ligne significative pour extraire les SHAs (format: <local ref> <local sha> <remote ref> <remote sha>)
+        # On cherche la dernière ligne significative pour extraire les SHAs
         last_ref = [x for x in lines if x.strip()][-1].split() if lines else []
         
         if len(last_ref) >= 4:
-             # old_sha_for_diff est le SHA du dernier commit connu sur la remote (index 1)
-             # new_sha_for_diff est le SHA du commit le plus récent à pousser (index 3)
-             old_sha_for_diff = last_ref[1]
-             new_sha_for_diff = last_ref[3]
+             # last_ref[1] = SHA du dernier commit connu sur la remote (old_ref)
+             # last_ref[3] = SHA du commit le plus récent à pousser (new_ref)
+             old_ref: str = last_ref[1] 
+             new_ref: str = last_ref[3] 
              
-             # Utilité : Si old_sha_for_diff est 0000... (nouvelle branche), on analyse tous les commits de cette branche
-             if all(c == '0' for c in old_sha_for_diff):
-                 commit_range = new_sha_for_diff # Analyse tous les commits de la nouvelle branche
+             # Si old_ref est 0000... (nouvelle branche), analyser tous les commits.
+             if all(c == '0' for c in old_ref):
+                 commit_range: str = new_ref
              else:
                  # Standard push: compare entre old remote HEAD et new local HEAD
-                 commit_range = f"{old_sha_for_diff}..{new_sha_for_diff}"
+                 commit_range: str = f"{old_ref}..{new_ref}"
         else:
-            print(f"{COLOR_YELLOW}WARN:{COLOR_END} Format de références pre-push inattendu. Utilisation de HEAD^...HEAD.", file=sys.stderr)
-            commit_range = "HEAD^...HEAD"
+            print(f"{COLOR_YELLOW}WARN:{COLOR_END} Format de références pre-push inattendu. Utilisation de HEAD~1..HEAD.", file=sys.stderr)
+            commit_range: str = "HEAD~1..HEAD"
             
     else:
-        # Mode local (sans hook) ou CI/CD sans références de push explicites
-        # Analyse du dernier commit ou de l'index
-        commit_range = "HEAD^...HEAD" # Analyser les changements du dernier commit
+        # Mode local ou fallback (sans hook): analyse du dernier commit ou de l'index
+        # Ceci est utilisé si le script est lancé sans être via le hook pre-push
+        commit_range: str = "HEAD~1..HEAD" # Mis à jour pour cohérence et clarté
 
     # 2. COMMANDE GIT DIFF
     try:
@@ -526,7 +526,7 @@ def main():
                 is_strict = config['analyzer'].get('strict_untagged_output', False)
                 if is_strict:
                     print(f"[{COLOR_RED}❌{COLOR_END}] {file_path} : {COLOR_RED}PROBLÈME DÉTECTÉ (Output non classifié - Mode strict) !{COLOR_END}")
-                    has_critical_error = True 
+                    has_critical_error = True
                 else:
                     print(f"[{COLOR_YELLOW}⚠️{COLOR_END}] {file_path} : {COLOR_YELLOW}Avertissements (non classifiés) !{COLOR_END}")
 
