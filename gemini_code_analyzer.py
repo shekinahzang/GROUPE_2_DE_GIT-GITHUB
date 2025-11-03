@@ -95,7 +95,7 @@ def detect_project_language():
     """Détecte la langue principale du projet et retourne une étiquette et le contexte détaillé."""
     context = ""
     
-    # 1. JavaScript/TypeScript (Priorité aux projets Web/Node.js)
+    # 1. JavaScript/TypeScript
     if os.path.exists('package.json'):
         language_tag = 'JavaScript/TypeScript'
         context = "Projet Node.js/Web."
@@ -124,7 +124,7 @@ def detect_project_language():
     # 4. Fallback
     return 'General', "Aucun langage principal détecté. Analyse selon les standards généraux du logiciel."
 
-# --- Fonctions de Cache et d'Analyse (omettent le détail interne pour la concision) ---
+# --- Fonctions de Cache et d'Analyse (inchangées) ---
 
 def load_cache():
     """Charge le cache depuis le fichier JSON."""
@@ -155,32 +155,68 @@ def get_file_hash(file_path):
     except (IOError, OSError): 
         return None
 
-def get_files_and_patches(config):
-    """Récupère la liste de tous les fichiers modifiés et génère le patch."""
+# MODIFIÉ : Mise à jour de la fonction pour utiliser le commit range du hook pre-push
+def get_files_and_patches(config, refs_data=None):
+    """
+    Récupère la liste de tous les fichiers modifiés, filtre et génère le patch.
+    Utilise refs_data (old_ref et new_ref) si fourni par le hook pre-push.
+    """
     files_to_process = []
     
+    # 1. DÉTERMINATION DE LA PLAGE DE COMMITS À ANALYSER
+    
+    if refs_data:
+        # Mode pre-push: Analyse de la plage de commits envoyée via STDIN
+        
+        lines = refs_data.split('\n')
+        # On cherche la dernière ligne significative pour extraire les SHAs
+        last_ref = [x for x in lines if x.strip()][-1].split() if lines else []
+        
+        if len(last_ref) >= 4:
+             # last_ref[1] = SHA du dernier commit connu sur la remote (old_ref)
+             # last_ref[3] = SHA du commit le plus récent à pousser (new_ref)
+             old_ref = last_ref[1] 
+             new_ref = last_ref[3] 
+             
+             # Si old_ref est 0000..., c'est une nouvelle branche. On compare les commits de la nouvelle branche.
+             if all(c == '0' for c in old_ref):
+                 commit_range = new_ref
+             else:
+                 # Standard push: compare entre old remote HEAD et new local HEAD
+                 commit_range = f"{old_ref}..{new_ref}"
+        else:
+            print(f"{COLOR_YELLOW}WARN:{COLOR_END} Format de références pre-push inattendu. Utilisation de HEAD~1..HEAD.", file=sys.stderr)
+            commit_range = "HEAD~1..HEAD"
+            
+    else:
+        # Mode local ou fallback (sans hook): analyse du dernier commit ou de l'index
+        # Ceci est utilisé si le script est lancé sans être via le hook pre-push
+        commit_range = "HEAD^...HEAD"
+
+    # 2. COMMANDE GIT DIFF
     try:
-        # Tente de comparer avec la branche distante/précédente
-        command = ["git", "diff", "--name-only", "HEAD"]
-        result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=10)
-        files = result.stdout.strip().split('\n')
-    except Exception:
+        # Récupère la liste des fichiers modifiés dans la plage de commits
+        command_files = ["git", "diff", "--name-only", commit_range]
+        result_files = subprocess.run(command_files, capture_output=True, text=True, check=True, timeout=10)
+        files = result_files.stdout.strip().split('\n')
+    except Exception as e:
+        print(f"{COLOR_RED}ERREUR GIT:{COLOR_END} Échec de la commande 'git diff --name-only {commit_range}': {e}", file=sys.stderr)
         return []
 
+    # 3. FILTRAGE ET RÉCUPÉRATION DU PATCH
     for file_path in files:
         if not file_path or not os.path.exists(file_path): continue
+        
         analyzable_exts = config['analyzer']['analyzable_extensions']
         if not any(file_path.lower().endswith(ext) for ext in analyzable_exts): continue
             
         try:
-            patch_command = ["git", "diff", "--unified=0", "HEAD^", "--", file_path]
+            # Récupère le patch pour la plage de commits, mais uniquement pour le fichier en cours
+            patch_command = ["git", "diff", "--unified=0", commit_range, "--", file_path]
             patch_result = subprocess.run(patch_command, capture_output=True, text=True, check=True, errors='ignore', timeout=10)
             patch_content = patch_result.stdout.strip()
             
-            if not patch_content:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    patch_content = f.read()
-            
+            # Pour un fichier modifié, le patch doit contenir au moins le header du diff et des changements
             if patch_content.strip():
                 files_to_process.append({ 'path': file_path, 'patch': patch_content })
         except Exception:
@@ -188,6 +224,7 @@ def get_files_and_patches(config):
 
     return files_to_process
 
+# --- Analyse Code avec Gemini (inchangée) ---
 def analyze_code_with_gemini(file_info, config, context, cache, full_rules):
     """Analyse le patch avec Gemini, en utilisant le cache si possible."""
     
@@ -242,7 +279,8 @@ def analyze_code_with_gemini(file_info, config, context, cache, full_rules):
         return f"{COLOR_RED}Erreur inattendue:{COLOR_END} {e}", False
 
 
-# MODIFIÉ : Ajout de la génération de texte motivant par Gemini
+# --- Fonction d'Envoi d'E-mail (inchangée) ---
+
 def send_push_rejection_email(recipient_email, reason_summary, detailed_report, user_prefs, user_name):
     """
     Envoie un e-mail au développeur avec le rapport de l'analyse, formaté en HTML stylisé.
@@ -263,7 +301,7 @@ def send_push_rejection_email(recipient_email, reason_summary, detailed_report, 
     # Personnalisation du message 
     interest = user_prefs.get('interest', 'la qualité du code')
     
-    # --- 1. GÉNÉRATION DU MESSAGE MOTIVANT PAR GEMINI (NOUVEAU) ---
+    # --- 1. GÉNÉRATION DU MESSAGE MOTIVANT PAR GEMINI ---
     motivational_text = reason_summary
     
     try:
@@ -288,7 +326,7 @@ def send_push_rejection_email(recipient_email, reason_summary, detailed_report, 
         motivational_text = f"Votre push a été annulé car l'analyse de code Gemini a détecté des problèmes critiques ou non conformes. {reason_summary}"
 
 
-    # --- 2. ADAPTATION DU SALUT ET SUJET (SUPPRESSION DE L'INTÉRÊT EXPLICITE) ---
+    # --- 2. ADAPTATION DU SALUT ET SUJET ---
     if user_name:
         greeting_text = f"Salut {user_name}, Maître du Code !"
     else:
@@ -371,7 +409,7 @@ def send_push_rejection_email(recipient_email, reason_summary, detailed_report, 
 
 
 # --------------------------------------------------------------------------------
-# MAIN (Logique de chargement inchangée)
+# MAIN
 # --------------------------------------------------------------------------------
 
 def main():
@@ -385,9 +423,9 @@ def main():
 
     if is_ci_cd:
         # Mode CI/CD (GitHub Actions)
+        # ... (Logique CI/CD inchangée) ...
         user_email = os.getenv("PUSHER_EMAIL") 
         user_name = os.getenv("PUSHER_NAME")   
-        # En CI, l'intérêt est une variable d'environnement (ex: 'randonnée', 'jeux vidéo')
         user_prefs = {'interest': os.getenv("PREF_INTEREST", 'la qualité du code')} 
         
         if not os.getenv("GEMINI_API_KEY"):
@@ -396,10 +434,10 @@ def main():
         
     else:
         # Mode Local (pre-push hook)
-        load_dotenv() # Lit le fichier .env
-        user_prefs = load_user_prefs() # Lit le .user_email_prefs.json 
+        # ... (Logique locale inchangée) ...
+        load_dotenv() 
+        user_prefs = load_user_prefs() 
 
-        # Récupération du nom de l'utilisateur (Git)
         try:
             git_name_command = ["git", "config", "user.name"]
             user_name = subprocess.run(git_name_command, capture_output=True, text=True, check=False).stdout.strip()
@@ -407,7 +445,6 @@ def main():
         except Exception:
             user_name = None
             
-        # Récupération de l'e-mail avec logique de repli
         try:
             git_email_command = ["git", "config", "user.email"]
             git_email = subprocess.run(git_email_command, capture_output=True, text=True, check=False).stdout.strip()
@@ -433,12 +470,19 @@ def main():
     
     full_rules = f"Règles Spécifiques ({language}): {dynamic_rules}. Règle du Fichier Config: {project_rules_override}"
     
+    # NOUVEAU: Récupération des commits si en mode pre-push
+    # Lit STDIN si le script n'est pas en mode CI/CD et si une donnée est pipée (hook pre-push)
+    refs_data = sys.stdin.read().strip() if not is_ci_cd and not sys.stdin.isatty() else None
+    
+    # MODIFIÉ: Appel de la fonction avec les références si disponibles
+    files_to_analyze = get_files_and_patches(config, refs_data) 
+    
+    # ... (Le reste de la fonction est inchangé) ...
 
     print(f"{COLOR_BLUE}--- 🚀 Démarrage de l'analyse de code par Gemini ({'CI/CD' if is_ci_cd else 'pre-push'}) ---{COLOR_END}")
     print(f"{COLOR_BLUE}Contexte du Projet ({language}): {COLOR_END}{context}")
     
     cache = load_cache() 
-    files_to_analyze = get_files_and_patches(config)
     
     if not files_to_analyze:
         print(f"\n{COLOR_YELLOW}--- INFO HOOK : Aucun fichier pertinent trouvé. Poursuite. ---{COLOR_END}")
