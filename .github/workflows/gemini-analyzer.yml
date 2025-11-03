@@ -1,44 +1,76 @@
-
 name: Revue de Code Critique (ESLint + Gemini)
 
 on:
   push:
-    # ... (branches inchangées) ...
+    branches:
+      - main
+      - master
+      - develop
   pull_request:
-    # ... (branches inchangées) ...
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - master
+      - develop
+  # Permet de lancer le workflow manuellement depuis l'interface GitHub
   workflow_dispatch:
 
 jobs:
   code_quality_check:
     runs-on: ubuntu-latest
     
-    # 1. Définition des variables dynamiques (pusher's info)
+    # 1. Définition des variables dynamiques (user info)
+    # Utilité : Ces variables injectent le nom et l'e-mail de l'utilisateur qui a déclenché l'événement 
+    # (via 'push' ou 'pull_request') dans l'environnement du job.
     env:
-      # NOUVEAU: Détecte l'e-mail et le nom de l'utilisateur qui a déclenché l'événement.
-      # Pour 'push' (y compris les commits en ligne)
+      # Récupère l'e-mail ou le login de l'utilisateur qui a initié l'action
       PUSHER_EMAIL: ${{ github.event.pusher.email || github.event.pull_request.user.email }}
       PUSHER_NAME: ${{ github.event.pusher.name || github.event.pull_request.user.login }}
-      # Simule la préférence utilisateur (doit être configurée dans les secrets si complexe, 
-      # ou codée en dur si standard pour la CI)
-      PREF_INTEREST: "la sécurité et la performance en ligne" 
+      
+      # NOTE: Si vous voulez que le centre d'intérêt (PREF_INTEREST) soit variable en CI/CD, 
+      # il doit être défini soit ici (en dur) soit comme un Secret d'Organisation/Dépôt.
+      # Sinon, il prendra la valeur par défaut 'la qualité du code'.
+      # Exemple ci-dessous utilisant un Secret d'environnement appelé CI_PREF_INTEREST (à définir)
+      PREF_INTEREST: ${{ secrets.CI_PREF_INTEREST || 'la performance et la sécurité' }}
 
     steps:
-      # ... (checkout, setup-python, installation des dépendances inchangés) ...
-      
+      - name: ⬇️ Checkout du code
+        uses: actions/checkout@v4
+        # Utilité : Télécharge le code du dépôt sur la machine virtuelle de GitHub.
+
+      - name: 🛠️ Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+        # Utilité : Configure l'environnement Python nécessaire.
+
+      - name: 📥 Installation des dépendances (Python)
+        run: pip install -r requirements.txt
+        # Utilité : Installe les bibliothèques Python nécessaires (google-genai, python-dotenv, tqdm, etc.).
+
+      - name: 📦 Installation des dépendances (Node/ESLint)
+        # Nécessaire pour l'étape ESLint, si votre projet est en JS/TS
+        run: npm install
+        # Utilité : Installe les modules Node.js (dont ESLint).
+
       - name: 🔬 Exécution de l'Analyse Statique (ESLint)
         run: |
           ./node_modules/.bin/eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0
         continue-on-error: false
+        # Utilité : Lance ESLint pour une validation rapide et statique. `continue-on-error: false` 
+        # force l'échec immédiat si des erreurs sont trouvées.
 
       - name: 🧠 Exécution de l'Analyse Critique par Gemini
         run: python gemini_code_analyzer.py
         env:
-          # Les variables de la section 'env' du job sont automatiquement injectées ici.
-          # SECRET (Clé API)
+          # Les variables 'PUSHER_EMAIL', 'PUSHER_NAME' et 'PREF_INTEREST' sont déjà injectées au niveau du Job.
+          # SECRET CRITIQUE (Clé API)
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          # SECRETS (SMTP)
+          # SECRETS SMTP (pour l'envoi d'e-mail)
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+        # Utilité : Lance le script d'analyse, qui applique la détection de langage, les règles dynamiques
+        # (typage Python, etc.) et envoie l'e-mail motivant en cas de blocage critique.
