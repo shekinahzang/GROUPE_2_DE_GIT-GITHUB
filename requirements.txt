@@ -4,4 +4,4 @@ tqdm
 pyyaml
 python-dotenv
 google-genai
-smtplib
+
