@@ -49,16 +49,22 @@ jobs:
         # Utilité : Installe les bibliothèques Python nécessaires (google-genai, python-dotenv, tqdm, etc.).
 
       - name: 📦 Installation des dépendances (Node/ESLint)
-        # Nécessaire pour l'étape ESLint, si votre projet est en JS/TS
-        run: npm install
-        # Utilité : Installe les modules Node.js (dont ESLint).
+        id: npm_install
+        # Utilité : Exécute npm install UNIQUEMENT si package.json existe.
+        run: |
+          if [ -f package.json ]; then
+            npm install
+          else
+            echo "::notice file=package.json::Fichier package.json non trouvé. Saut de l'installation Node/ESLint."
+          fi
 
       - name: 🔬 Exécution de l'Analyse Statique (ESLint)
+        # Utilité : Exécute ESLint UNIQUEMENT si l'installation précédente a réussi (i.e. package.json existait).
+        # Nous ajoutons une condition pour sauter l'étape si npm install n'a pas été fait.
+        if: success() && steps.npm_install.outcome != 'skipped'
         run: |
           ./node_modules/.bin/eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0
         continue-on-error: false
-        # Utilité : Lance ESLint pour une validation rapide et statique. `continue-on-error: false` 
-        # force l'échec immédiat si des erreurs sont trouvées.
 
       - name: 🧠 Exécution de l'Analyse Critique par Gemini
         run: python gemini_code_analyzer.py
